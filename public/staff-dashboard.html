@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard &mdash; TechniConnect</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">TechniConnect</div>
+  <div class="navbar-links">
+    <span id="userEmail" class="small"></span>
+    <a href="/logout" class="button ghost btn-small">Log Out</a>
+  </div>
+</nav>
+<div class="container">
+  <h1 class="page-title">Alumni Affairs Dashboard</h1>
+
+  <section class="card">
+    <h2 class="section-title">Verification Queue</h2>
+    <div id="queueControls" style="margin-bottom:0.75rem;display:flex;gap:0.75rem;align-items:center;">
+      <input type="text" id="qSearch" placeholder="Search by name, email, or student ID" style="padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);width:320px;">
+      <button class="button primary btn-small" onclick="loadQueue()">Refresh</button>
+    </div>
+    <div id="queue" class="empty">Loading...</div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Alumni Records (staff only)</h2>
+    <div style="margin-bottom:0.75rem;display:flex;gap:0.75rem;align-items:center;">
+      <input type="text" id="rSearch" placeholder="Search alumni records..." style="padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);width:320px;">
+      <button class="button secondary btn-small" onclick="loadRecords()">Search</button>
+    </div>
+    <div id="records" class="empty">Loading...</div>
+  </section>
+</div>
+
+<!-- Record edit modal -->
+<div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:50;display:flex;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:560px;width:92%;background:var(--surface);position:relative;">
+    <button onclick="closeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;color:var(--muted);">&times;</button>
+    <h2 class="section-title" style="margin-top:0;">Edit Alumni Record</h2>
+    <form id="editForm">
+      <input type="hidden" name="id">
+      <div class="grid-2">
+        <div class="form-group"><label>First name</label><input name="first_name" required></div>
+        <div class="form-group"><label>Middle name</label><input name="middle_name"></div>
+      </div>
+      <div class="form-group"><label>Last name</label><input name="last_name" required></div>
+      <div class="grid-2">
+        <div class="form-group"><label>Batch year</label><input name="batch_year" type="number"></div>
+        <div class="form-group"><label>College</label><input name="college"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Email</label><input name="email"></div>
+        <div class="form-group"><label>Contact number</label><input name="contact_number"></div>
+      </div>
+      <div class="form-group"><label>Address</label><textarea name="address" rows="3"></textarea></div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+        <button type="submit" class="button primary">Save</button>
+        <button type="button" class="button ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const modal = document.getElementById('modal');
+const editForm = document.getElementById('editForm');
+let editingId = null;
+
+async function loadJson(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error('Failed to load ' + path);
+  return res.json();
+}
+
+function escapeHtml(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));}
+
+async function init(){
+  const p = await loadJson('/alumni/profile'); // staff has no profile; ignore error
+  document.getElementById('userEmail').textContent = 'Staff Account';
+  loadQueue();
+  loadRecords();
+}
+
+async function loadQueue(){
+  const q = document.getElementById('qSearch').value;
+  const url = q ? '/staff/verification-queue?q=' + encodeURIComponent(q) : '/staff/verification-queue';
+  try {
+    const rows = await loadJson(url);
+    const el = document.getElementById('queue');
+    if (!rows.length) el.innerHTML = '<div class="empty">No pending registration requests.</div>';
+    else el.innerHTML = `
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Submitted</th><th>ID Document</th><th>Action</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.first_name||'')} ${escapeHtml(r.last_name||'')}</td>
+              <td>${escapeHtml(r.email)}</td>
+              <td><span class="badge pending">${r.status}</span></td>
+              <td class="small">${new Date(r.created_at).toLocaleDateString()}</td>
+              <td><a href="/uploads/${encodeURIComponent((r.id_document_path||'').replace(/\\/g,'/').split('/').pop())}" class="small" target="_blank">View ID</a></td>
+              <td>
+                <button class="button success btn-small" onclick="handleRequest(${r.id},'approve')">Approve</button>
+                <button class="button danger btn-small" onclick="handleRequest(${r.id},'reject')">Reject</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch(e){
+    document.getElementById('queue').innerHTML = '<div class="empty">Unable to load queue.</div>';
+  }
+}
+
+async function loadRecords(){
+  const q = document.getElementById('rSearch').value;
+  try {
+    const rows = await loadJson('/staff/alumni-records?q=' + encodeURIComponent(q));
+    const el = document.getElementById('records');
+    if (!rows.length) el.innerHTML = '<div class="empty">No alumni records found.</div>';
+    else el.innerHTML = `
+      <table>
+        <thead><tr><th>Name</th><th>Student ID</th><th>Email</th><th>Batch</th><th>College</th><th>Verified</th><th>Action</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.first_name||'')} ${escapeHtml(r.last_name||'')}</td>
+              <td>${escapeHtml(r.student_id||'—')}</td>
+              <td>${escapeHtml(r.email||'—')}</td>
+              <td>${r.batch_year||'—'}</td>
+              <td>${escapeHtml(r.college||'—')}</td>
+              <td>${r.is_verified ? 'Yes' : 'No'}</td>
+              <td>
+                <button class="button ghost btn-small" onclick="openEdit(${r.id}, '${escapeHtml(r.first_name||'')}', '${escapeHtml(r.middle_name||'')}', '${escapeHtml(r.last_name||'')}', ${r.batch_year||''}, '${escapeHtml(r.college||'')}', '${escapeHtml(r.email||'')}', '${escapeHtml(r.contact_number||'')}', '${escapeHtml(r.address||'')}')">Edit</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch(e){
+    document.getElementById('records').innerHTML = '<div class="empty">Unable to load records.</div>';
+  }
+}
+
+async function handleRequest(id, action){
+  const notes = action === 'reject' ? prompt('Reason for rejection (optional):') : '';
+  if (action === 'reject' && notes === null) return;
+  try {
+    const res = await fetch(`/staff/verification-queue/${id}/action`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action, admin_notes: notes })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    loadQueue();
+  } catch(e){ alert(e.message || 'Action failed.'); }
+}
+
+function openEdit(id, fn, mn, ln, by, col, em, cn, addr){
+  editingId = id;
+  const f = editForm;
+  f.elements['id'].value = id;
+  f.elements['first_name'].value = fn;
+  f.elements['middle_name'].value = mn;
+  f.elements['last_name'].value = ln;
+  f.elements['batch_year'].value = by || '';
+  f.elements['college'].value = col;
+  f.elements['email'].value = em;
+  f.elements['contact_number'].value = cn;
+  f.elements['address'].value = addr;
+  modal.classList.remove('hidden');
+}
+function closeModal(){ modal.classList.add('hidden'); }
+
+editForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  const fd = new FormData(e.target);
+  const body = Object.fromEntries(fd.entries());
+  try {
+    const res = await fetch(`/staff/alumni-records/${editingId}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(await res.text());
+    closeModal();
+    loadRecords();
+  } catch(err){ alert(err.message || 'Update failed.'); } finally { btn.disabled = false; }
+});
+
+init();
+</script>
+</body>
+</html>

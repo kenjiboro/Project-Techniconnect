@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alumni Dashboard &mdash; TechniConnect</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">TechniConnect</div>
+  <div class="navbar-links">
+    <span id="userEmail" class="small"></span>
+    <a href="/logout" class="button ghost btn-small">Log Out</a>
+  </div>
+</nav>
+<div class="container">
+  <div class="flash success hidden" id="flash"></div>
+  <div class="flash error hidden" id="flashError"></div>
+
+  <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <h1 class="page-title">Alumni Dashboard</h1>
+    <a href="/alumni/profile" class="button secondary btn-small">View / Edit Profile</a>
+  </div>
+
+  <section class="card">
+    <h2 class="section-title">Official Announcements</h2>
+    <div id="announcements" class="empty">Loading announcements...</div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Your Registration Status</h2>
+    <div id="requestStatus" class="empty">Loading...</div>
+  </section>
+
+  <section class="card hidden" id="profileSection">
+    <h2 class="section-title">Your Profile</h2>
+    <div id="profileView"></div>
+  </section>
+</div>
+<script>
+const flash = document.getElementById('flash');
+const flashError = document.getElementById('flashError');
+const userEmailEl = document.getElementById('userEmail');
+
+async function loadJson(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error('Failed to load ' + path);
+  return res.json();
+}
+
+async function init() {
+  try {
+    const profile = await loadJson('/alumni/profile');
+    userEmailEl.textContent = profile.email || 'Alumni Account';
+    document.getElementById('profileSection').classList.remove('hidden');
+    renderProfile(profile);
+  } catch (e) {
+    // profile may not exist yet
+  }
+
+  try {
+    const announcements = await loadJson('/alumni/announcements');
+    const el = document.getElementById('announcements');
+    if (!announcements.length) el.innerHTML = '<div class="empty">No announcements at this time.</div>';
+    else el.innerHTML = announcements.map(a => `
+      <div style="padding:0.75rem 0;border-bottom:1px solid var(--border);">
+        <div style="font-weight:700;color:var(--primary);">${escapeHtml(a.title)}</div>
+        <div class="small">${escapeHtml(a.content)}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('announcements').innerHTML = '<div class="empty">Unable to load announcements.</div>';
+  }
+
+  try {
+    const req = await loadJson('/alumni/request-status');
+    const el = document.getElementById('requestStatus');
+    if (req.status === 'none') el.innerHTML = '<div class="empty">No registration request on file.</div>';
+    else el.innerHTML = `
+      <div style="padding:1rem;">
+        <div style="font-weight:700;color:var(--primary);">Status: <span class="badge ${req.status}">${req.status}</span></div>
+        ${req.admin_notes ? '<div class="small">Staff note: ' + escapeHtml(req.admin_notes) + '</div>' : ''}
+        <div class="small">Submitted: ${new Date(req.created_at).toLocaleDateString()}</div>
+      </div>
+    `;
+  } catch (e) {
+    document.getElementById('requestStatus').innerHTML = '<div class="empty">Unable to load status.</div>';
+  }
+}
+
+function renderProfile(p) {
+  const el = document.getElementById('profileView');
+  el.innerHTML = `
+    <form id="profileForm">
+      <div class="grid-2">
+        <div class="form-group"><label>First name</label><input name="first_name" value="${escapeHtml(p.first_name||'')}"></div>
+        <div class="form-group"><label>Middle name</label><input name="middle_name" value="${escapeHtml(p.middle_name||'')}"></div>
+      </div>
+      <div class="form-group"><label>Last name</label><input name="last_name" value="${escapeHtml(p.last_name||'')}"></div>
+      <div class="grid-2">
+        <div class="form-group"><label>Batch year</label><input name="batch_year" type="number" value="${p.batch_year||''}"></div>
+        <div class="form-group"><label>College</label><input name="college" value="${escapeHtml(p.college||'')}"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Email</label><input name="email" value="${escapeHtml(p.email||'')}"></div>
+        <div class="form-group"><label>Contact number</label><input name="contact_number" value="${escapeHtml(p.contact_number||'')}"></div>
+      </div>
+      <div class="form-group"><label>Address</label><textarea name="address" rows="3">${escapeHtml(p.address||'')}</textarea></div>
+      <button type="submit" class="button primary">Save Changes</button>
+      <button type="button" class="button ghost" onclick="location.reload()">Cancel</button>
+    </form>
+  `;
+  document.getElementById('profileForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    const fd = new FormData(ev.target);
+    const body = Object.fromEntries(fd.entries());
+    try {
+      const res = await fetch('/alumni/profile', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(await res.text());
+      flash.textContent = 'Profile updated successfully.';
+      flash.classList.remove('hidden');
+      setTimeout(() => flash.classList.add('hidden'), 3000);
+    } catch (err) {
+      flashError.textContent = err.message || 'Update failed.';
+      flashError.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
+
+init();
+</script>
+</body>
+</html>
