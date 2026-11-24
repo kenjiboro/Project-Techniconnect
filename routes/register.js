@@ -27,6 +27,9 @@ router.post('/', upload.single('id_document'), async (req, res) => {
   if (!email || !password || !first_name || !last_name) {
     return res.status(400).send('Email, password, first name, and last name are required.');
   }
+  if (password.length < 8) {
+    return res.status(400).send('Password must be at least 8 characters.');
+  }
   if (!req.file) {
     return res.status(400).send('A government-issued ID document is required.');
   }
@@ -84,7 +87,28 @@ router.post('/', upload.single('id_document'), async (req, res) => {
     return res.status(500).send('Failed to submit registration request.');
   }
 
-  res.redirect('/register-success');
+  // Save profile data now so it is ready when staff approves — is_verified stays false until then
+  const { error: profileError } = await supabase
+    .from('alumni_profiles')
+    .insert([{
+      user_id: newUser.id,
+      first_name: first_name.trim(),
+      middle_name: middle_name ? middle_name.trim() : null,
+      last_name: last_name.trim(),
+      batch_year: batch_year ? parseInt(batch_year) : null,
+      college: college || null,
+      email: email,
+      contact_number: contact_number || null,
+      address: address || null,
+      is_verified: false
+    }]);
+
+  if (profileError) {
+    console.error('Profile insert error:', profileError);
+    // Non-fatal: registration request was already created, so continue
+  }
+
+  res.json({ success: true });
 });
 
 module.exports = router;

@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Register &mdash; TechniConnect</title>
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .field-error { color: #c0392b; font-size: 0.82rem; margin-top: 3px; display: none; }
+  .field-error.visible { display: block; }
+  .input-error { border-color: #c0392b !important; }
+  .password-wrap { position: relative; }
+  .password-wrap input { padding-right: 2.6rem; width: 100%; box-sizing: border-box; }
+  .toggle-pw {
+    position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    color: #666; padding: 0; line-height: 1;
+  }
+  .toggle-pw:focus { outline: 2px solid #3498db; border-radius: 3px; }
+</style>
 </head>
 <body>
 <nav class="navbar">
@@ -19,79 +32,239 @@
     <div class="flash error hidden" id="error"></div>
 
     <form id="registerForm" novalidate>
+      <!-- Email -->
       <div class="form-group">
-        <label>Email address <span class="require">*</span></label>
-        <input type="email" name="email" required placeholder="you@cit.edu" autocomplete="email">
+        <label for="reg-email">Email address <span class="require">*</span></label>
+        <input type="email" id="reg-email" name="email" required placeholder="you@cit.edu" autocomplete="email">
+        <div class="field-error" id="err-email">Please enter a valid email address.</div>
       </div>
+
+      <!-- Password -->
       <div class="form-group">
-        <label>Password <span class="require">*</span></label>
-        <input type="password" name="password" required minlength="6" autocomplete="new-password">
+        <label for="reg-password">Password <span class="require">*</span></label>
+        <div class="password-wrap">
+          <input type="password" id="reg-password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">👁</button>
+        </div>
+        <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
       </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="reg-confirm">Confirm password <span class="require">*</span></label>
+        <div class="password-wrap">
+          <input type="password" id="reg-confirm" name="confirm_password" required autocomplete="new-password" placeholder="Re-enter your password">
+          <button type="button" class="toggle-pw" id="toggleConfirm" aria-label="Toggle confirm password visibility">👁</button>
+        </div>
+        <div class="field-error" id="err-confirm">Passwords do not match.</div>
+      </div>
+
+      <!-- First / Middle name -->
       <div class="grid-2">
         <div class="form-group">
-          <label>First name <span class="require">*</span></label>
-          <input type="text" name="first_name" required>
+          <label for="reg-first">First name <span class="require">*</span></label>
+          <input type="text" id="reg-first" name="first_name" required>
+          <div class="field-error" id="err-first">First name is required.</div>
         </div>
         <div class="form-group">
-          <label>Middle name</label>
-          <input type="text" name="middle_name">
+          <label for="reg-middle">Middle name</label>
+          <input type="text" id="reg-middle" name="middle_name">
         </div>
       </div>
+
+      <!-- Last name -->
       <div class="form-group">
-        <label>Last name <span class="require">*</span></label>
-        <input type="text" name="last_name" required>
+        <label for="reg-last">Last name <span class="require">*</span></label>
+        <input type="text" id="reg-last" name="last_name" required>
+        <div class="field-error" id="err-last">Last name is required.</div>
       </div>
+
+      <!-- Batch year / College -->
       <div class="grid-2">
         <div class="form-group">
-          <label>Batch / graduation year</label>
-          <input type="number" name="batch_year" min="1950" max="2100" placeholder="e.g. 2020">
+          <label for="reg-batch">Batch / graduation year</label>
+          <input type="number" id="reg-batch" name="batch_year" min="1950" placeholder="e.g. 2020">
+          <div class="field-error" id="err-batch">Enter a valid graduation year.</div>
         </div>
         <div class="form-group">
-          <label>College / Department</label>
-          <input type="text" name="college" placeholder="e.g. College of Engineering">
+          <label for="reg-college">College / Department</label>
+          <input type="text" id="reg-college" name="college" placeholder="e.g. College of Engineering">
         </div>
       </div>
+
+      <!-- Contact / Address -->
       <div class="grid-2">
         <div class="form-group">
-          <label>Contact number</label>
-          <input type="tel" name="contact_number" placeholder="e.g. +63 9xx xxx xxxx">
+          <label for="reg-contact">Contact number</label>
+          <input type="tel" id="reg-contact" name="contact_number" placeholder="e.g. +63 9xx xxx xxxx">
         </div>
         <div class="form-group">
-          <label>Address</label>
-          <input type="text" name="address" placeholder="Street, City, Province">
+          <label for="reg-address">Address</label>
+          <input type="text" id="reg-address" name="address" placeholder="Street, City, Province">
         </div>
       </div>
+
+      <!-- ID document -->
       <div class="form-group">
-        <label>Government-issued ID document <span class="require">*</span></label>
-        <input type="file" name="id_document" accept=".pdf,.jpg,.jpeg,.png" required>
+        <label for="reg-id">Government-issued ID document <span class="require">*</span></label>
+        <input type="file" id="reg-id" name="id_document" accept=".pdf,.jpg,.jpeg,.png" required>
         <p class="small">Accepted: PDF, JPG, JPEG, PNG (max 5 MB).</p>
+        <div class="field-error" id="err-file">Please upload a valid file (PDF, JPG, JPEG, or PNG, max 5 MB).</div>
       </div>
+
       <p class="small">By registering, you agree that your personal information is kept private and accessible only to authorized Alumni Affairs staff.</p>
       <button type="submit" class="button primary" style="width:100%;" id="regBtn">Submit Registration</button>
     </form>
   </div>
 </div>
+
 <script>
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('regBtn');
-  const error = document.getElementById('error');
-  error.classList.add('hidden');
-  error.textContent = '';
-  btn.disabled = true;
-  btn.textContent = 'Submitting...';
-  const fd = new FormData(e.target);
-  try {
-    const res = await fetch('/register', { method: 'POST', body: fd });
-    if (!res.ok) throw new Error(await res.text());
-    window.location.href = '/register-success';
-  } catch (err) {
-    error.textContent = err.message || 'Registration failed.';
-    error.classList.remove('hidden');
-    btn.disabled = false;
-    btn.textContent = 'Submit Registration';
+  // --- Helpers ---
+  const $ = id => document.getElementById(id);
+
+  function showError(fieldId, errorId) {
+    $('reg-' + fieldId).classList.add('input-error');
+    $('err-' + fieldId).classList.add('visible');
   }
-});
+  function clearError(fieldId, errorId) {
+    $('reg-' + fieldId).classList.remove('input-error');
+    $('err-' + fieldId).classList.remove('visible');
+  }
+
+  // Set batch year max to current year dynamically
+  $('reg-batch').setAttribute('max', new Date().getFullYear());
+
+  // --- Password visibility toggles ---
+  function makeToggle(toggleId, inputId) {
+    $(toggleId).addEventListener('click', () => {
+      const input = $(inputId);
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      $(toggleId).textContent = isHidden ? '🙈' : '👁';
+    });
+  }
+  makeToggle('togglePw', 'reg-password');
+  makeToggle('toggleConfirm', 'reg-confirm');
+
+  // --- Inline validation on blur ---
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  $('reg-email').addEventListener('blur', () => {
+    if (!emailRe.test($('reg-email').value.trim())) showError('email');
+    else clearError('email');
+  });
+
+  $('reg-password').addEventListener('blur', () => {
+    if ($('reg-password').value.length < 8) showError('password');
+    else clearError('password');
+  });
+
+  $('reg-confirm').addEventListener('blur', () => {
+    if ($('reg-confirm').value !== $('reg-password').value) showError('confirm');
+    else clearError('confirm');
+  });
+
+  $('reg-first').addEventListener('blur', () => {
+    if (!$('reg-first').value.trim()) showError('first');
+    else clearError('first');
+  });
+
+  $('reg-last').addEventListener('blur', () => {
+    if (!$('reg-last').value.trim()) showError('last');
+    else clearError('last');
+  });
+
+  $('reg-batch').addEventListener('blur', () => {
+    const val = parseInt($('reg-batch').value);
+    const max = new Date().getFullYear();
+    if ($('reg-batch').value && (val < 1950 || val > max)) showError('batch');
+    else clearError('batch');
+  });
+
+  $('reg-id').addEventListener('change', () => {
+    const file = $('reg-id').files[0];
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (file && (file.size > 5 * 1024 * 1024 || !allowedTypes.includes(file.type))) {
+      showError('file', 'err-file');
+      $('reg-id').value = '';
+    } else {
+      $('reg-id').classList.remove('input-error');
+      $('err-file').classList.remove('visible');
+    }
+  });
+
+  // --- Form submit ---
+  $('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('regBtn');
+    const errorBox = $('error');
+    errorBox.classList.add('hidden');
+    errorBox.textContent = '';
+
+    // Run all validations
+    let valid = true;
+
+    if (!emailRe.test($('reg-email').value.trim())) { showError('email'); valid = false; }
+    else clearError('email');
+
+    if ($('reg-password').value.length < 8) { showError('password'); valid = false; }
+    else clearError('password');
+
+    if ($('reg-confirm').value !== $('reg-password').value) { showError('confirm'); valid = false; }
+    else clearError('confirm');
+
+    if (!$('reg-first').value.trim()) { showError('first'); valid = false; }
+    else clearError('first');
+
+    if (!$('reg-last').value.trim()) { showError('last'); valid = false; }
+    else clearError('last');
+
+    const batchVal = parseInt($('reg-batch').value);
+    const maxYear = new Date().getFullYear();
+    if ($('reg-batch').value && (batchVal < 1950 || batchVal > maxYear)) { showError('batch'); valid = false; }
+    else clearError('batch');
+
+    const file = $('reg-id').files[0];
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!file) {
+      $('err-file').textContent = 'Please upload your government-issued ID.';
+      $('reg-id').classList.add('input-error');
+      $('err-file').classList.add('visible');
+      valid = false;
+    } else if (file.size > 5 * 1024 * 1024 || !allowedTypes.includes(file.type)) {
+      $('err-file').textContent = 'File must be PDF, JPG, JPEG, or PNG and under 5 MB.';
+      $('reg-id').classList.add('input-error');
+      $('err-file').classList.add('visible');
+      valid = false;
+    } else {
+      $('reg-id').classList.remove('input-error');
+      $('err-file').classList.remove('visible');
+    }
+
+    if (!valid) {
+      errorBox.textContent = 'Please fix the errors above before submitting.';
+      errorBox.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    // Remove confirm_password before sending — server doesn't need it
+    const fd = new FormData(e.target);
+    fd.delete('confirm_password');
+
+    try {
+      const res = await fetch('/register', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error(await res.text());
+      window.location.href = '/register-success';
+    } catch (err) {
+      errorBox.textContent = err.message || 'Registration failed. Please try again.';
+      errorBox.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Submit Registration';
+    }
+  });
 </script>
 </body>
 </html>

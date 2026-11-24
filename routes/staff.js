@@ -55,6 +55,9 @@ router.post('/verification-queue/:id/action', async (req, res) => {
   if (updErr) return res.status(500).send('Update failed.');
 
   if (newStatus === 'approved') {
+    // Profile was created at registration time with is_verified = false.
+    // On approval we simply mark it verified. If for any reason it is missing
+    // (e.g. legacy registrations), we insert a minimal placeholder instead.
     const { data: existing } = await supabase
       .from('alumni_profiles')
       .select('id')
@@ -64,19 +67,7 @@ router.post('/verification-queue/:id/action', async (req, res) => {
     if (!existing || existing.length === 0) {
       await supabase
         .from('alumni_profiles')
-        .insert([{
-          user_id: request.user_id,
-          student_id: null,
-          first_name: null,
-          middle_name: null,
-          last_name: null,
-          batch_year: null,
-          college: null,
-          email: null,
-          contact_number: null,
-          address: null,
-          is_verified: true
-        }]);
+        .insert([{ user_id: request.user_id, is_verified: true }]);
     } else {
       await supabase
         .from('alumni_profiles')
