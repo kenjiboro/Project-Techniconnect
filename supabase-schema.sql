@@ -27,6 +27,7 @@ create table if not exists alumni_profiles (
   contact_number text,
   address text,
   is_verified boolean default false,
+  show_in_directory boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -52,6 +53,9 @@ create table if not exists announcements (
   created_at timestamptz default now(),
   created_by bigint references users(id)
 );
+
+-- Migration: add show_in_directory column (run this if the table already exists)
+alter table alumni_profiles add column if not exists show_in_directory boolean default false;
 
 -- Indexes for common queries
 create index if not exists idx_users_email on users(email);

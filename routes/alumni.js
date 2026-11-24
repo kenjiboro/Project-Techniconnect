@@ -79,4 +79,48 @@ router.get('/announcements', async (req, res) => {
   res.json(rows || []);
 });
 
+// --- Alumni directory (opt-in, verified alumni only) ---
+router.get('/directory', async (req, res) => {
+  const { q } = req.query;
+  let query = supabase
+    .from('alumni_profiles')
+    .select('id, first_name, last_name, batch_year, college')
+    .eq('is_verified', true)
+    .eq('show_in_directory', true)
+    .order('last_name', { ascending: true });
+
+  if (q && q.trim()) {
+    query = query.or(
+      `first_name.ilike.%${q.trim()}%,last_name.ilike.%${q.trim()}%,college.ilike.%${q.trim()}%`
+    );
+  }
+
+  const { data: rows, error } = await query;
+  if (error) return res.status(500).send('Server error.');
+  res.json(rows || []);
+});
+
+// --- Toggle directory opt-in ---
+router.post('/directory/opt-in', async (req, res) => {
+  const { show } = req.body; // boolean
+
+  const { data: profile, error: findErr } = await supabase
+    .from('alumni_profiles')
+    .select('id, is_verified')
+    .eq('user_id', req.session.user.id)
+    .limit(1)
+    .single();
+
+  if (findErr || !profile) return res.status(404).send('Profile not found.');
+  if (!profile.is_verified) return res.status(403).send('Only verified alumni can join the directory.');
+
+  const { error: updErr } = await supabase
+    .from('alumni_profiles')
+    .update({ show_in_directory: !!show })
+    .eq('id', profile.id);
+
+  if (updErr) return res.status(500).send('Update failed.');
+  res.json({ success: true, show_in_directory: !!show });
+});
+
 module.exports = router;

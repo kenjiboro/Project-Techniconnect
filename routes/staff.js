@@ -79,6 +79,33 @@ router.post('/verification-queue/:id/action', async (req, res) => {
   res.json({ success: true, message: `Request ${newStatus}.` });
 });
 
+// --- Duplicate detection: check if a pending request matches an existing verified profile ---
+router.get('/duplicate-check/:userId', async (req, res) => {
+  // Get the pending registrant's profile data
+  const { data: pending, error: pendingErr } = await supabase
+    .from('alumni_profiles')
+    .select('first_name, last_name, email')
+    .eq('user_id', req.params.userId)
+    .limit(1)
+    .single();
+
+  if (pendingErr || !pending) return res.json({ duplicates: [] });
+
+  // Find verified profiles with the same name or email
+  const { data: matches, error: matchErr } = await supabase
+    .from('alumni_profiles')
+    .select('id, first_name, last_name, email, batch_year, college')
+    .eq('is_verified', true)
+    .neq('user_id', req.params.userId)
+    .or(
+      `email.eq.${pending.email},` +
+      `and(first_name.ilike.${pending.first_name},last_name.ilike.${pending.last_name})`
+    );
+
+  if (matchErr) return res.json({ duplicates: [] });
+  res.json({ duplicates: matches || [] });
+});
+
 // --- Staff: search/view/maintain alumni records ---
 router.get('/alumni-records', async (req, res) => {
   const { q } = req.query;

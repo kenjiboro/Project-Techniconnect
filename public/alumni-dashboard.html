@@ -5,12 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alumni Dashboard &mdash; TechniConnect</title>
 <link rel="stylesheet" href="/css/style.css">
+<style>
+  .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.25rem; }
+  .tab-btn {
+    background: none; border: none; border-bottom: 3px solid transparent;
+    padding: 0.65rem 1.2rem; font-size: 0.95rem; font-weight: 600;
+    color: var(--muted); cursor: pointer; margin-bottom: -2px; border-radius: 0;
+    transition: color 0.15s;
+  }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-btn:hover { color: var(--primary); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .dir-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1rem; border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 0.5rem;
+    background: var(--surface); font-size: 0.92rem;
+  }
+  .dir-card:hover { background: #f8fafc; }
+  .dir-name { font-weight: 700; color: var(--primary); }
+  .dir-meta { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+
+  .opt-in-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #e7f0fa; border: 1px solid #bcd4ee;
+    border-radius: var(--radius); padding: 0.85rem 1rem;
+    margin-bottom: 1rem; font-size: 0.9rem;
+  }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: #ccc;
+    border-radius: 24px; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle-slider:before {
+    content: ''; position: absolute; width: 18px; height: 18px;
+    background: white; border-radius: 50%; left: 3px; top: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--success); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+  .dir-search-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+  .dir-search-row input { flex: 1; }
+  .dir-count { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; }
+</style>
 </head>
 <body>
 <nav class="navbar">
   <div class="navbar-brand">TechniConnect</div>
   <div class="navbar-links">
-    <span id="userEmail" class="small"></span>
+    <span id="userEmail" class="small" style="color:#fff;"></span>
     <a href="/logout" class="button ghost btn-small">Log Out</a>
   </div>
 </nav>
@@ -18,77 +65,185 @@
   <div class="flash success hidden" id="flash"></div>
   <div class="flash error hidden" id="flashError"></div>
 
-  <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
-    <h1 class="page-title">Alumni Dashboard</h1>
-    <a href="/alumni/profile" class="button secondary btn-small">View / Edit Profile</a>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h1 class="page-title" style="margin-bottom:0;">Alumni Dashboard</h1>
   </div>
 
-  <section class="card">
-    <h2 class="section-title">Official Announcements</h2>
-    <div id="announcements" class="empty">Loading announcements...</div>
-  </section>
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('home')">Home</button>
+    <button class="tab-btn" onclick="switchTab('profile')">My Profile</button>
+    <button class="tab-btn" onclick="switchTab('directory')">Alumni Directory</button>
+  </div>
 
-  <section class="card">
-    <h2 class="section-title">Your Registration Status</h2>
-    <div id="requestStatus" class="empty">Loading...</div>
-  </section>
+  <!-- HOME TAB -->
+  <div class="tab-panel active" id="tab-home">
+    <section class="card">
+      <h2 class="section-title">Official Announcements</h2>
+      <div id="announcements" class="empty">Loading announcements...</div>
+    </section>
 
-  <section class="card hidden" id="profileSection">
-    <h2 class="section-title">Your Profile</h2>
-    <div id="profileView"></div>
-  </section>
+    <section class="card">
+      <h2 class="section-title">Your Registration Status</h2>
+      <div id="requestStatus" class="empty">Loading...</div>
+    </section>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div class="tab-panel" id="tab-profile">
+    <section class="card">
+      <h2 class="section-title">Your Profile</h2>
+      <div id="profileView"><div class="empty">Loading profile...</div></div>
+    </section>
+  </div>
+
+  <!-- DIRECTORY TAB -->
+  <div class="tab-panel" id="tab-directory">
+    <section class="card">
+      <h2 class="section-title">Alumni Directory</h2>
+      <p class="small" style="margin-bottom:1rem;">
+        A searchable list of verified alumni who have chosen to appear here.
+        Your information is <strong>never shown</strong> unless you opt in below.
+      </p>
+
+      <!-- Opt-in toggle (shown only to verified alumni) -->
+      <div class="opt-in-bar hidden" id="optInBar">
+        <span>
+          <strong>Appear in directory</strong>
+          <span class="small" style="display:block;">Let other verified alumni find you by name, batch year, and college.</span>
+        </span>
+        <label class="toggle-switch" title="Toggle directory visibility">
+          <input type="checkbox" id="optInToggle" onchange="toggleOptIn(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="dir-search-row">
+        <input type="text" id="dirSearch" placeholder="Search by name, batch year, or college..." oninput="searchDirectory()">
+      </div>
+      <div class="dir-count hidden" id="dirCount"></div>
+      <div id="directoryList"><div class="empty">Loading directory...</div></div>
+    </section>
+  </div>
 </div>
+
 <script>
 const flash = document.getElementById('flash');
-const flashError = document.getElementById('flashError');
-const userEmailEl = document.getElementById('userEmail');
+const flashErr = document.getElementById('flashError');
+let currentProfile = null;
+let dirDebounce = null;
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
 
 async function loadJson(path) {
   const res = await fetch(path);
-  if (!res.ok) throw new Error('Failed to load ' + path);
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-async function init() {
-  try {
-    const profile = await loadJson('/alumni/profile');
-    userEmailEl.textContent = profile.email || 'Alumni Account';
-    document.getElementById('profileSection').classList.remove('hidden');
-    renderProfile(profile);
-  } catch (e) {
-    // profile may not exist yet
-  }
+function showFlash(msg, type = 'success') {
+  const el = type === 'success' ? flash : flashErr;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3500);
+}
 
+// --- Tab switching ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['home','profile','directory'][i] === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  if (tab === 'directory') loadDirectory();
+}
+
+// --- Init ---
+async function init() {
+  // Load announcements
   try {
-    const announcements = await loadJson('/alumni/announcements');
+    const rows = await loadJson('/alumni/announcements');
     const el = document.getElementById('announcements');
-    if (!announcements.length) el.innerHTML = '<div class="empty">No announcements at this time.</div>';
-    else el.innerHTML = announcements.map(a => `
+    if (!rows.length) el.innerHTML = '<div class="empty">No announcements at this time.</div>';
+    else el.innerHTML = rows.map(a => `
       <div style="padding:0.75rem 0;border-bottom:1px solid var(--border);">
         <div style="font-weight:700;color:var(--primary);">${escapeHtml(a.title)}</div>
-        <div class="small">${escapeHtml(a.content)}</div>
+        <div class="small" style="margin-top:0.25rem;">${escapeHtml(a.content)}</div>
+        <div class="small" style="margin-top:0.2rem;">${new Date(a.created_at).toLocaleDateString()}</div>
       </div>
     `).join('');
-  } catch (e) {
+  } catch {
     document.getElementById('announcements').innerHTML = '<div class="empty">Unable to load announcements.</div>';
   }
 
+  // Load request status
   try {
     const req = await loadJson('/alumni/request-status');
     const el = document.getElementById('requestStatus');
-    if (req.status === 'none') el.innerHTML = '<div class="empty">No registration request on file.</div>';
-    else el.innerHTML = `
-      <div style="padding:1rem;">
-        <div style="font-weight:700;color:var(--primary);">Status: <span class="badge ${req.status}">${req.status}</span></div>
-        ${req.admin_notes ? '<div class="small">Staff note: ' + escapeHtml(req.admin_notes) + '</div>' : ''}
-        <div class="small">Submitted: ${new Date(req.created_at).toLocaleDateString()}</div>
-      </div>
-    `;
-  } catch (e) {
+    if (req.status === 'none') {
+      el.innerHTML = '<div class="empty">No registration request on file.</div>';
+    } else {
+      const steps = ['pending', 'approved'];
+      const stepLabels = ['Submitted & Under Review', 'Verified & Active'];
+      const currentStep = steps.indexOf(req.status);
+      const isRejected = req.status === 'rejected';
+
+      el.innerHTML = `
+        <div style="padding:0.5rem 0;">
+          ${isRejected ? `
+            <div class="flash error" style="margin-bottom:0.75rem;">
+              Your registration was rejected.
+              ${req.admin_notes ? '<br><strong>Reason:</strong> ' + escapeHtml(req.admin_notes) : ''}
+            </div>` : `
+            <div style="display:flex;gap:0;margin-bottom:1rem;margin-top:0.5rem;">
+              ${steps.map((s, i) => `
+                <div style="flex:1;text-align:center;">
+                  <div style="
+                    width:32px;height:32px;border-radius:50%;margin:0 auto 4px;
+                    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;
+                    background:${i <= currentStep ? 'var(--success)' : 'var(--border)'};
+                    color:${i <= currentStep ? '#fff' : 'var(--muted)'};
+                  ">${i <= currentStep ? '✓' : i + 1}</div>
+                  <div style="font-size:0.75rem;color:${i <= currentStep ? 'var(--success)' : 'var(--muted)'};">
+                    ${stepLabels[i]}
+                  </div>
+                </div>
+                ${i < steps.length - 1 ? `<div style="flex:0 0 2rem;border-top:2px solid ${i < currentStep ? 'var(--success)' : 'var(--border)'};margin-top:16px;"></div>` : ''}
+              `).join('')}
+            </div>`
+          }
+          <div class="small">Submitted: ${new Date(req.created_at).toLocaleDateString()}</div>
+        </div>
+      `;
+    }
+  } catch {
     document.getElementById('requestStatus').innerHTML = '<div class="empty">Unable to load status.</div>';
+  }
+
+  // Load profile
+  try {
+    const profile = await loadJson('/alumni/profile');
+    currentProfile = profile;
+    document.getElementById('userEmail').textContent = profile.users?.email || 'Alumni Account';
+    renderProfile(profile);
+
+    // Show opt-in toggle only for verified alumni
+    if (profile.is_verified) {
+      const bar = document.getElementById('optInBar');
+      bar.classList.remove('hidden');
+      document.getElementById('optInToggle').checked = !!profile.show_in_directory;
+    }
+  } catch {
+    document.getElementById('profileView').innerHTML =
+      '<div class="empty">Your profile is pending approval or not yet set up.</div>';
   }
 }
 
+// --- Profile render & save ---
 function renderProfile(p) {
   const el = document.getElementById('profileView');
   el.innerHTML = `
@@ -115,26 +270,74 @@ function renderProfile(p) {
     ev.preventDefault();
     const btn = ev.target.querySelector('button[type="submit"]');
     btn.disabled = true;
-    const fd = new FormData(ev.target);
-    const body = Object.fromEntries(fd.entries());
+    btn.textContent = 'Saving...';
+    const body = Object.fromEntries(new FormData(ev.target).entries());
     try {
-      const res = await fetch('/alumni/profile', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const res = await fetch('/alumni/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
       if (!res.ok) throw new Error(await res.text());
-      flash.textContent = 'Profile updated successfully.';
-      flash.classList.remove('hidden');
-      setTimeout(() => flash.classList.add('hidden'), 3000);
+      showFlash('Profile updated successfully.');
     } catch (err) {
-      flashError.textContent = err.message || 'Update failed.';
-      flashError.classList.remove('hidden');
+      showFlash(err.message || 'Update failed.', 'error');
     } finally {
       btn.disabled = false;
+      btn.textContent = 'Save Changes';
     }
   });
 }
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+// --- Directory opt-in toggle ---
+async function toggleOptIn(checked) {
+  try {
+    const res = await fetch('/alumni/directory/opt-in', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ show: checked })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showFlash(checked ? 'You are now visible in the alumni directory.' : 'You have been removed from the directory.');
+    loadDirectory();
+  } catch (err) {
+    showFlash(err.message || 'Could not update directory preference.', 'error');
+    document.getElementById('optInToggle').checked = !checked; // revert
+  }
+}
+
+// --- Directory load & search ---
+function searchDirectory() {
+  clearTimeout(dirDebounce);
+  dirDebounce = setTimeout(loadDirectory, 300);
+}
+
+async function loadDirectory() {
+  const q = document.getElementById('dirSearch').value.trim();
+  const el = document.getElementById('directoryList');
+  const countEl = document.getElementById('dirCount');
+  el.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const url = '/alumni/directory' + (q ? '?q=' + encodeURIComponent(q) : '');
+    const rows = await loadJson(url);
+    countEl.textContent = rows.length + ' alumni found';
+    countEl.classList.remove('hidden');
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No alumni found' + (q ? ' matching "' + escapeHtml(q) + '"' : '') + '.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(r => `
+      <div class="dir-card">
+        <div>
+          <div class="dir-name">${escapeHtml(r.first_name || '')} ${escapeHtml(r.last_name || '')}</div>
+          <div class="dir-meta">
+            ${r.batch_year ? 'Batch ' + r.batch_year : ''}
+            ${r.batch_year && r.college ? ' &middot; ' : ''}
+            ${escapeHtml(r.college || '')}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch {
+    el.innerHTML = '<div class="empty">Unable to load directory.</div>';
+  }
 }
 
 init();
