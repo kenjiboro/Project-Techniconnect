@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
+const { sendApprovalEmail, sendRejectionEmail } = require('../mailer');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -55,9 +56,6 @@ router.post('/verification-queue/:id/action', async (req, res) => {
   if (updErr) return res.status(500).send('Update failed.');
 
   if (newStatus === 'approved') {
-    // Profile was created at registration time with is_verified = false.
-    // On approval we simply mark it verified. If for any reason it is missing
-    // (e.g. legacy registrations), we insert a minimal placeholder instead.
     const { data: existing } = await supabase
       .from('alumni_profiles')
       .select('id')
@@ -74,6 +72,34 @@ router.post('/verification-queue/:id/action', async (req, res) => {
         .update({ is_verified: true })
         .eq('id', existing[0].id);
     }
+  }
+
+  // Send email notification to the alumni (non-fatal if mail fails)
+  try {
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', request.user_id)
+      .single();
+
+    const { data: profileRow } = await supabase
+      .from('alumni_profiles')
+      .select('first_name')
+      .eq('user_id', request.user_id)
+      .single();
+
+    const toEmail = userRow?.email;
+    const firstName = profileRow?.first_name || 'Alumni';
+
+    if (toEmail) {
+      if (newStatus === 'approved') {
+        await sendApprovalEmail(toEmail, firstName);
+      } else {
+        await sendRejectionEmail(toEmail, firstName, admin_notes || null);
+      }
+    }
+  } catch (mailErr) {
+    console.error('[mailer] Failed to send notification email:', mailErr.message);
   }
 
   res.json({ success: true, message: `Request ${newStatus}.` });
@@ -104,6 +130,52 @@ router.get('/duplicate-check/:userId', async (req, res) => {
 
   if (matchErr) return res.json({ duplicates: [] });
   res.json({ duplicates: matches || [] });
+});
+
+// --- Announcements: list all (staff sees unpublished too) ---
+router.get('/announcements', async (req, res) => {
+  const { data: rows, error } = await supabase
+    .from('announcements')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).send('Server error.');
+  res.json(rows || []);
+});
+
+// --- Announcements: create ---
+router.post('/announcements', async (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) return res.status(400).send('Title and content are required.');
+  const { error } = await supabase
+    .from('announcements')
+    .insert([{ title, content, published: true, created_by: req.session.user.id }]);
+  if (error) return res.status(500).send('Failed to create announcement.');
+  res.json({ success: true });
+});
+
+// --- Announcements: toggle published / update ---
+router.post('/announcements/:id', async (req, res) => {
+  const { title, content, published } = req.body;
+  const updates = {};
+  if (title !== undefined) updates.title = title;
+  if (content !== undefined) updates.content = content;
+  if (published !== undefined) updates.published = published === true || published === 'true';
+  const { error } = await supabase
+    .from('announcements')
+    .update(updates)
+    .eq('id', req.params.id);
+  if (error) return res.status(500).send('Update failed.');
+  res.json({ success: true });
+});
+
+// --- Announcements: delete ---
+router.delete('/announcements/:id', async (req, res) => {
+  const { error } = await supabase
+    .from('announcements')
+    .delete()
+    .eq('id', req.params.id);
+  if (error) return res.status(500).send('Delete failed.');
+  res.json({ success: true });
 });
 
 // --- Staff: search/view/maintain alumni records ---

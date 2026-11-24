@@ -25,6 +25,17 @@
     padding: 0.4rem 0; border-bottom: 1px solid #fde68a; color: var(--text);
   }
   .dup-match:last-child { border-bottom: none; }
+
+  .ann-row {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--border); gap: 1rem;
+  }
+  .ann-row:last-child { border-bottom: none; }
+  .ann-row-body { flex: 1; }
+  .ann-row-title { font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
+  .ann-row-content { font-size: 0.87rem; color: var(--text); margin-bottom: 0.3rem; }
+  .ann-row-meta { font-size: 0.78rem; color: var(--muted); }
+  .ann-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -47,6 +58,26 @@
       <button class="button primary btn-small" onclick="loadQueue()">Refresh</button>
     </div>
     <div id="queue" class="empty">Loading...</div>
+  </section>
+
+  <!-- Announcements Management -->
+  <section class="card">
+    <h2 class="section-title">Announcements</h2>
+
+    <!-- Post new announcement -->
+    <form id="announcementForm" style="margin-bottom:1.25rem;">
+      <div class="form-group">
+        <label for="ann-title">Title <span class="require">*</span></label>
+        <input type="text" id="ann-title" placeholder="Announcement title" required>
+      </div>
+      <div class="form-group">
+        <label for="ann-content">Content <span class="require">*</span></label>
+        <textarea id="ann-content" rows="3" placeholder="Write announcement content..." required></textarea>
+      </div>
+      <button type="submit" class="button primary btn-small" id="annBtn">Post Announcement</button>
+    </form>
+
+    <div id="announcementList"><div class="empty">Loading announcements...</div></div>
   </section>
 
   <!-- Alumni Records -->
@@ -287,9 +318,87 @@ editForm.addEventListener('submit', async (e) => {
   }
 });
 
+// --- Announcements ---
+async function loadAnnouncements() {
+  const el = document.getElementById('announcementList');
+  try {
+    const rows = await loadJson('/staff/announcements');
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No announcements yet.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(a => `
+      <div class="ann-row">
+        <div class="ann-row-body">
+          <div class="ann-row-title">
+            ${escapeHtml(a.title)}
+            ${!a.published ? '<span class="badge pending" style="margin-left:0.4rem;">Unpublished</span>' : ''}
+          </div>
+          <div class="ann-row-content">${escapeHtml(a.content)}</div>
+          <div class="ann-row-meta">${new Date(a.created_at).toLocaleDateString()}</div>
+        </div>
+        <div class="ann-row-actions">
+          <button class="button ghost btn-small" onclick="togglePublish(${a.id}, ${a.published})">
+            ${a.published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button class="button danger btn-small" onclick="deleteAnnouncement(${a.id})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch {
+    el.innerHTML = '<div class="empty">Unable to load announcements.</div>';
+  }
+}
+
+document.getElementById('announcementForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('annBtn');
+  const title = document.getElementById('ann-title').value.trim();
+  const content = document.getElementById('ann-content').value.trim();
+  if (!title || !content) return;
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  try {
+    const res = await fetch('/staff/announcements', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-content').value = '';
+    loadAnnouncements();
+  } catch (err) {
+    alert(err.message || 'Failed to post announcement.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Post Announcement';
+  }
+});
+
+async function togglePublish(id, currentlyPublished) {
+  try {
+    const res = await fetch(`/staff/announcements/${id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: !currentlyPublished })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    loadAnnouncements();
+  } catch (err) { alert(err.message || 'Failed to update.'); }
+}
+
+async function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/staff/announcements/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    loadAnnouncements();
+  } catch (err) { alert(err.message || 'Failed to delete.'); }
+}
+
 // Initial load
 loadQueue();
 loadRecords();
+loadAnnouncements();
 </script>
 </body>
 </html>
