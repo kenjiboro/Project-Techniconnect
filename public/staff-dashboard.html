@@ -33,9 +33,28 @@
   .ann-row:last-child { border-bottom: none; }
   .ann-row-body { flex: 1; }
   .ann-row-title { font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
-  .ann-row-content { font-size: 0.87rem; color: var(--text); margin-bottom: 0.3rem; }
+  .ann-row-content { font-size: 0.87rem; color: var(--text); margin-bottom: 0.3rem; white-space: pre-line; }
   .ann-row-meta { font-size: 0.78rem; color: var(--muted); }
   .ann-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+  .filter-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.75rem; }
+  .filter-row input, .filter-row select {
+    width: auto; padding: 0.55rem 0.75rem; font-size: 0.9rem;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { background: var(--primary-light); }
+  .rec-count { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; }
+
+  .tag {
+    display: inline-block; padding: 0.1rem 0.55rem; margin: 0 0.25rem 0.25rem 0;
+    background: var(--gold-light); color: #7a5a00; border: 1px solid var(--gold);
+    border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+  }
+  .tag.open { background: #e7f4ec; color: #1f5c36; border-color: var(--success); }
+  .job-detail { font-size: 0.85rem; margin-bottom: 0.3rem; white-space: pre-line; }
+  .job-detail strong { color: var(--primary-dark); }
+  .audience-box { display: none; padding: 0.75rem; border: 1px dashed var(--border); border-radius: var(--radius); margin-bottom: 1rem; }
+  .audience-box.visible { display: block; }
 </style>
 </head>
 <body>
@@ -80,14 +99,137 @@
     <div id="announcementList"><div class="empty">Loading announcements...</div></div>
   </section>
 
+  <!-- Job Offers Management -->
+  <section class="card">
+    <h2 class="section-title">Job Offers</h2>
+    <p class="small" style="margin-bottom:1rem;">
+      Post job openings for alumni. Leave the audience on "All alumni" or restrict an offer to specific colleges or programs.
+      Alumni only see offers that match the college or program on their profile.
+    </p>
+
+    <form id="jobForm" style="margin-bottom:1.25rem;">
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-company">Company name <span class="require">*</span></label>
+          <input type="text" id="job-company" required>
+        </div>
+        <div class="form-group">
+          <label for="job-title">Job title <span class="require">*</span></label>
+          <input type="text" id="job-title" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="job-desc">Job description</label>
+        <textarea id="job-desc" rows="3" placeholder="What the role involves, work setup, benefits, and other important details"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-req">Requirements <span class="require">*</span></label>
+          <textarea id="job-req" rows="3" placeholder="e.g. Resume, TOR, NBI clearance" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="job-qual">Qualifications <span class="require">*</span></label>
+          <textarea id="job-qual" rows="3" placeholder="e.g. BS Computer Engineering, 1 year experience" required></textarea>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-contact">Contact numbers for inquiries <span class="require">*</span></label>
+          <input type="text" id="job-contact" placeholder="e.g. 0917 000 0000, (032) 000 0000" required>
+        </div>
+        <div class="form-group">
+          <label for="job-email">Contact email</label>
+          <input type="email" id="job-email" placeholder="hr@company.com">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-location">Location</label>
+          <input type="text" id="job-location" placeholder="e.g. Cebu City, Remote">
+        </div>
+        <div class="form-group">
+          <label for="job-type">Employment type</label>
+          <select id="job-type">
+            <option value="">Not specified</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+            <option>Contract</option>
+            <option>Internship</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-salary">Salary range</label>
+          <input type="text" id="job-salary" placeholder="e.g. PHP 25,000 to 35,000 per month">
+        </div>
+        <div class="form-group">
+          <label for="job-deadline">Application deadline</label>
+          <input type="date" id="job-deadline">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="job-audience">Who can see this offer?</label>
+        <select id="job-audience" onchange="toggleAudience()">
+          <option value="all">All alumni</option>
+          <option value="restricted">Specific colleges or programs only</option>
+        </select>
+      </div>
+      <div class="audience-box" id="audienceBox">
+        <div class="form-group">
+          <label for="job-colleges">Colleges / departments (comma separated)</label>
+          <input type="text" id="job-colleges" placeholder="e.g. College of Engineering and Architecture">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="job-programs">Programs (comma separated)</label>
+          <input type="text" id="job-programs" placeholder="e.g. BS Computer Engineering, BS Information Technology">
+        </div>
+        <p class="small" style="margin-top:0.5rem;">Names should match what alumni enter on their profile (capitalization is ignored). An alumnus who matches any listed college or program can see the offer.</p>
+      </div>
+
+      <button type="submit" class="button primary btn-small" id="jobBtn">Post Job Offer</button>
+    </form>
+
+    <div id="jobList"><div class="empty">Loading job offers...</div></div>
+  </section>
+
   <!-- Alumni Records -->
   <section class="card">
     <h2 class="section-title">Alumni Records (staff only)</h2>
-    <div style="margin-bottom:0.75rem;display:flex;gap:0.75rem;align-items:center;">
-      <input type="text" id="rSearch" placeholder="Search alumni records..."
-        style="padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);width:320px;">
+    <div class="filter-row">
+      <input type="text" id="rSearch" placeholder="Search name, email, student ID, college, program..."
+        style="width:320px;" onkeydown="if(event.key==='Enter')loadRecords()">
+      <input type="text" id="rCollege" placeholder="Filter by college" style="width:180px;">
+      <input type="number" id="rBatch" placeholder="Batch year" style="width:120px;">
+      <select id="rVerified">
+        <option value="">All statuses</option>
+        <option value="true">Verified</option>
+        <option value="false">Not verified</option>
+      </select>
       <button class="button secondary btn-small" onclick="loadRecords()">Search</button>
+      <button class="button ghost btn-small" onclick="resetRecordFilters()">Reset</button>
     </div>
+    <div class="filter-row">
+      <label class="small" style="margin:0;">Sort by</label>
+      <select id="rSort" onchange="sortFromDropdown()">
+        <option value="created_at">Date added</option>
+        <option value="last_name">Last name</option>
+        <option value="first_name">First name</option>
+        <option value="batch_year">Batch year</option>
+        <option value="college">College</option>
+        <option value="program">Program</option>
+        <option value="email">Email</option>
+        <option value="is_verified">Verified</option>
+        <option value="show_in_directory">In directory</option>
+      </select>
+      <select id="rOrder" onchange="sortFromDropdown()">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+      <span class="small">You can also click a column header to sort.</span>
+    </div>
+    <div class="rec-count hidden" id="recCount"></div>
     <div id="records" class="empty">Loading...</div>
   </section>
 </div>
@@ -110,6 +252,7 @@
         <div class="form-group"><label>Batch year</label><input name="batch_year" type="number"></div>
         <div class="form-group"><label>College</label><input name="college"></div>
       </div>
+      <div class="form-group"><label>Program</label><input name="program"></div>
       <div class="grid-2">
         <div class="form-group"><label>Email</label><input name="email"></div>
         <div class="form-group"><label>Contact number</label><input name="contact_number"></div>
@@ -127,6 +270,9 @@
 const modal = document.getElementById('modal');
 const editForm = document.getElementById('editForm');
 let editingId = null;
+let recordsCache = [];
+let sortCol = 'created_at';
+let sortDir = 'desc';
 
 function escapeHtml(s) {
   if (s == null) return '';
@@ -235,20 +381,67 @@ async function handleRequest(id, action) {
   } catch (e) { alert(e.message || 'Action failed.'); }
 }
 
-// --- Alumni records ---
+// --- Alumni records: search, filter, sort ---
+function arrow(col) {
+  return sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+}
+
+function setSort(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  document.getElementById('rSort').value = sortCol;
+  document.getElementById('rOrder').value = sortDir;
+  loadRecords();
+}
+
+function sortFromDropdown() {
+  sortCol = document.getElementById('rSort').value;
+  sortDir = document.getElementById('rOrder').value;
+  loadRecords();
+}
+
+function resetRecordFilters() {
+  ['rSearch', 'rCollege', 'rBatch', 'rVerified'].forEach(id => document.getElementById(id).value = '');
+  sortCol = 'created_at'; sortDir = 'desc';
+  document.getElementById('rSort').value = sortCol;
+  document.getElementById('rOrder').value = sortDir;
+  loadRecords();
+}
+
 async function loadRecords() {
-  const q = document.getElementById('rSearch').value;
+  const params = new URLSearchParams();
+  const q = document.getElementById('rSearch').value.trim();
+  const college = document.getElementById('rCollege').value.trim();
+  const batch = document.getElementById('rBatch').value.trim();
+  const verified = document.getElementById('rVerified').value;
+  if (q) params.set('q', q);
+  if (college) params.set('college', college);
+  if (batch) params.set('batch_year', batch);
+  if (verified) params.set('verified', verified);
+  params.set('sort', sortCol);
+  params.set('order', sortDir);
+
+  const el = document.getElementById('records');
+  const countEl = document.getElementById('recCount');
   try {
-    const rows = await loadJson('/staff/alumni-records?q=' + encodeURIComponent(q));
-    const el = document.getElementById('records');
+    const rows = await loadJson('/staff/alumni-records?' + params.toString());
+    recordsCache = rows;
+    countEl.textContent = rows.length + ' record' + (rows.length === 1 ? '' : 's') + ' found';
+    countEl.classList.remove('hidden');
     if (!rows.length) {
       el.innerHTML = '<div class="empty">No alumni records found.</div>';
       return;
     }
+    const th = (col, label) =>
+      `<th class="sortable" onclick="setSort('${col}')">${label}${arrow(col)}</th>`;
     el.innerHTML = `
       <table>
         <thead>
-          <tr><th>Name</th><th>Student ID</th><th>Email</th><th>Batch</th><th>College</th><th>Verified</th><th>In Directory</th><th>Action</th></tr>
+          <tr>
+            ${th('last_name', 'Name')}<th>Student ID</th>${th('email', 'Email')}
+            ${th('batch_year', 'Batch')}${th('college', 'College')}${th('program', 'Program')}
+            ${th('is_verified', 'Verified')}${th('show_in_directory', 'In Directory')}<th>Action</th>
+          </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
@@ -258,16 +451,11 @@ async function loadRecords() {
               <td>${escapeHtml(r.email || '—')}</td>
               <td>${r.batch_year || '—'}</td>
               <td>${escapeHtml(r.college || '—')}</td>
+              <td>${escapeHtml(r.program || '—')}</td>
               <td>${r.is_verified ? '<span class="badge approved">Yes</span>' : '<span class="badge pending">No</span>'}</td>
               <td>${r.show_in_directory ? '✓' : '—'}</td>
               <td>
-                <button class="button ghost btn-small" onclick="openEdit(
-                  ${r.id},
-                  '${escapeHtml(r.first_name||'')}','${escapeHtml(r.middle_name||'')}',
-                  '${escapeHtml(r.last_name||'')}',${r.batch_year||'null'},
-                  '${escapeHtml(r.college||'')}','${escapeHtml(r.email||'')}',
-                  '${escapeHtml(r.contact_number||'')}','${escapeHtml(r.address||'')}'
-                )">Edit</button>
+                <button class="button ghost btn-small" onclick="openEdit(${r.id})">Edit</button>
               </td>
             </tr>
           `).join('')}
@@ -275,23 +463,27 @@ async function loadRecords() {
       </table>
     `;
   } catch (e) {
-    document.getElementById('records').innerHTML = '<div class="empty">Unable to load records.</div>';
+    countEl.classList.add('hidden');
+    el.innerHTML = '<div class="empty">Unable to load records.</div>';
   }
 }
 
 // --- Edit modal ---
-function openEdit(id, fn, mn, ln, by, col, em, cn, addr) {
+function openEdit(id) {
+  const r = recordsCache.find(x => x.id === id);
+  if (!r) return;
   editingId = id;
   const f = editForm;
   f.elements['id'].value = id;
-  f.elements['first_name'].value = fn;
-  f.elements['middle_name'].value = mn;
-  f.elements['last_name'].value = ln;
-  f.elements['batch_year'].value = by || '';
-  f.elements['college'].value = col;
-  f.elements['email'].value = em;
-  f.elements['contact_number'].value = cn;
-  f.elements['address'].value = addr;
+  f.elements['first_name'].value = r.first_name || '';
+  f.elements['middle_name'].value = r.middle_name || '';
+  f.elements['last_name'].value = r.last_name || '';
+  f.elements['batch_year'].value = r.batch_year || '';
+  f.elements['college'].value = r.college || '';
+  f.elements['program'].value = r.program || '';
+  f.elements['email'].value = r.email || '';
+  f.elements['contact_number'].value = r.contact_number || '';
+  f.elements['address'].value = r.address || '';
   modal.classList.remove('hidden');
 }
 
@@ -395,10 +587,129 @@ async function deleteAnnouncement(id) {
   } catch (err) { alert(err.message || 'Failed to delete.'); }
 }
 
+// --- Job offers ---
+function toggleAudience() {
+  document.getElementById('audienceBox').classList.toggle(
+    'visible', document.getElementById('job-audience').value === 'restricted'
+  );
+}
+
+async function loadJobs() {
+  const el = document.getElementById('jobList');
+  try {
+    const rows = await loadJson('/staff/job-offers');
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No job offers yet.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(j => {
+      const colleges = j.target_colleges || [];
+      const programs = j.target_programs || [];
+      const open = !colleges.length && !programs.length;
+      return `
+      <div class="ann-row">
+        <div class="ann-row-body">
+          <div class="ann-row-title">
+            ${escapeHtml(j.job_title)} at ${escapeHtml(j.company_name)}
+            ${!j.published ? '<span class="badge pending" style="margin-left:0.4rem;">Unpublished</span>' : ''}
+          </div>
+          <div style="margin:0.3rem 0;">
+            ${open ? '<span class="tag open">All alumni</span>' : ''}
+            ${colleges.map(c => `<span class="tag">${escapeHtml(c)}</span>`).join('')}
+            ${programs.map(p => `<span class="tag">${escapeHtml(p)}</span>`).join('')}
+          </div>
+          ${j.description ? `<div class="job-detail"><strong>Description:</strong> ${escapeHtml(j.description)}</div>` : ''}
+          <div class="job-detail"><strong>Requirements:</strong> ${escapeHtml(j.requirements)}</div>
+          <div class="job-detail"><strong>Qualifications:</strong> ${escapeHtml(j.qualifications)}</div>
+          <div class="job-detail"><strong>Contact:</strong> ${escapeHtml(j.contact_numbers)}${j.contact_email ? ' &middot; ' + escapeHtml(j.contact_email) : ''}</div>
+          <div class="ann-row-meta">
+            ${[j.location, j.employment_type, j.salary_range,
+               j.application_deadline ? 'Deadline ' + j.application_deadline : null,
+               'Posted ' + new Date(j.created_at).toLocaleDateString()]
+              .filter(Boolean).map(escapeHtml).join(' &middot; ')}
+          </div>
+        </div>
+        <div class="ann-row-actions">
+          <button class="button ghost btn-small" onclick="toggleJob(${j.id}, ${j.published})">
+            ${j.published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button class="button danger btn-small" onclick="deleteJob(${j.id})">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div class="empty">Unable to load job offers.</div>';
+  }
+}
+
+document.getElementById('jobForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('jobBtn');
+  const v = id => document.getElementById(id).value.trim();
+  const restricted = v('job-audience') === 'restricted';
+  const body = {
+    company_name: v('job-company'),
+    job_title: v('job-title'),
+    description: v('job-desc'),
+    requirements: v('job-req'),
+    qualifications: v('job-qual'),
+    contact_numbers: v('job-contact'),
+    contact_email: v('job-email'),
+    location: v('job-location'),
+    employment_type: v('job-type'),
+    salary_range: v('job-salary'),
+    application_deadline: v('job-deadline'),
+    target_colleges: restricted ? v('job-colleges') : '',
+    target_programs: restricted ? v('job-programs') : ''
+  };
+  if (restricted && !body.target_colleges && !body.target_programs) {
+    alert('Enter at least one college or program, or choose "All alumni".');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  try {
+    const res = await fetch('/staff/job-offers', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    e.target.reset();
+    toggleAudience();
+    loadJobs();
+  } catch (err) {
+    alert(err.message || 'Failed to post job offer.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Post Job Offer';
+  }
+});
+
+async function toggleJob(id, currentlyPublished) {
+  try {
+    const res = await fetch(`/staff/job-offers/${id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: !currentlyPublished })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    loadJobs();
+  } catch (err) { alert(err.message || 'Failed to update.'); }
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job offer? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/staff/job-offers/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    loadJobs();
+  } catch (err) { alert(err.message || 'Failed to delete.'); }
+}
+
 // Initial load
 loadQueue();
 loadRecords();
 loadAnnouncements();
+loadJobs();
 </script>
 </body>
 </html>
