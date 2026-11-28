@@ -19,13 +19,29 @@ router.get('/dashboard', (req, res) => {
 
 // --- Verification queue ---
 router.get('/verification-queue', async (req, res) => {
+  // users!user_id tells Supabase which link to use (the table also links to users through reviewed_by)
   const { data: rows, error } = await supabase
     .from('registration_requests')
-    .select('*, users(email)')
+    .select('*, users!user_id(email)')
     .order('created_at', { ascending: false });
 
-  if (error) return res.status(500).send('Server error.');
-  res.json(rows || []);
+  if (error) {
+    console.error('verification-queue error:', error);
+    return res.status(500).send('Server error.');
+  }
+
+  // Add each applicant's name and details from their profile so the queue can show them
+  const ids = (rows || []).map((r) => r.user_id);
+  let profiles = [];
+  if (ids.length) {
+    const { data } = await supabase
+      .from('alumni_profiles')
+      .select('user_id, first_name, last_name, student_id, batch_year, college, program')
+      .in('user_id', ids);
+    profiles = data || [];
+  }
+  const byUser = Object.fromEntries(profiles.map((p) => [p.user_id, p]));
+  res.json((rows || []).map((r) => ({ ...r, ...(byUser[r.user_id] || {}) })));
 });
 
 // --- Approve/reject request ---
@@ -225,17 +241,19 @@ router.get('/alumni-records/:id', async (req, res) => {
 });
 
 router.post('/alumni-records/:id', async (req, res) => {
-  const { first_name, middle_name, last_name, batch_year, college, program, email, contact_number, address } = req.body;
+  const { first_name, middle_name, last_name, batch_year, college, program, email, contact_number, address, id_card_uid } = req.body;
   const { error } = await supabase
     .from('alumni_profiles')
     .update({
       first_name, middle_name: middle_name || null, last_name,
       batch_year: batch_year ? parseInt(batch_year) : null, college,
       program: program || null, email,
-      contact_number, address, updated_at: new Date().toISOString()
+      contact_number, address, updated_at: new Date().toISOString(),
+      id_card_uid: id_card_uid && String(id_card_uid).trim() ? String(id_card_uid).trim().toUpperCase() : null
     })
     .eq('id', req.params.id);
 
+  if (error && error.code === '23505') return res.status(409).send('That ID card number is already assigned to another alumnus.');
   if (error) return res.status(500).send('Update failed.');
   res.json({ success: true, message: 'Record updated.' });
 });
