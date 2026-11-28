@@ -91,4 +91,25 @@ async function sendRejectionEmail(toEmail, firstName, adminNotes) {
   console.log(`[mailer] Rejection email sent to ${toEmail}`);
 }
 
-module.exports = { sendApprovalEmail, sendRejectionEmail };
+/**
+ * Alert Alumni Affairs when an alumnus/alumna taps their ID at a campus gate.
+ * Set GATE_ALERT_EMAIL in .env (comma-separated for several staff). Blank = no email.
+ */
+async function sendGateAlertEmail(profile, gate) {
+  const to = process.env.GATE_ALERT_EMAIL;
+  if (!to) return;
+  if (!transporter) { console.log('[mailer] MAIL_HOST not set - skipping gate alert'); return; }
+  const when = new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' });
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM || 'TechniConnect <noreply@cit.edu>',
+    to,
+    subject: `Alumni on campus: ${profile.first_name} ${profile.last_name}`,
+    html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+      <h2 style="color:#7a1219;">Alumni campus entry</h2>
+      <p><strong>${profile.first_name} ${profile.last_name}</strong> tapped in at <strong>${gate}</strong> on ${when}.</p>
+      <p>Batch ${profile.batch_year || '-'} &middot; ${profile.college || '-'} &middot; ${profile.program || '-'}</p>
+      <p style="font-size:0.85rem;color:#6b7280;">TechniConnect &mdash; Alumni Affairs Office</p></div>`
+  });
+}
+
+module.exports = { sendApprovalEmail, sendRejectionEmail, sendGateAlertEmail };

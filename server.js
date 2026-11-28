@@ -52,8 +52,22 @@ function requireAlumni(req, res, next) {
 
 app.use(require('./routes/auth'));
 app.use('/register', require('./routes/register'));
+const gate = require('./routes/gate');
+app.use('/api/gate', gate.scannerRouter);
+app.use('/staff/entries', requireAuth, requireStaff, gate.staffRouter);
 app.use('/alumni', requireAuth, requireAlumni, require('./routes/alumni'));
 app.use('/staff', requireAuth, requireStaff, require('./routes/staff'));
+
+app.get('/public/announcements', async (req, res) => {
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('title, created_at')
+    .eq('published', true)
+    .order('created_at', { ascending: false })
+    .limit(3);
+  if (error) return res.status(500).send('Server error.');
+  res.json(data || []);
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
