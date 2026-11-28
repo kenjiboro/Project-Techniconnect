@@ -3,135 +3,241 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7a1219">
 <title>Staff Dashboard &mdash; TechniConnect</title>
+<link rel="icon" type="image/png" href="/img/cit-logo.png">
 <link rel="stylesheet" href="/css/style.css">
-<style>
-  .dup-badge {
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;
-    border-radius: 999px; padding: 0.15rem 0.6rem;
-    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-    cursor: pointer;
-  }
-  .dup-badge:hover { background: #fde68a; }
-
-  .dup-panel {
-    background: #fffbeb; border: 1px solid #fcd34d;
-    border-radius: var(--radius); padding: 0.75rem 1rem;
-    margin-top: 0.5rem; font-size: 0.85rem;
-  }
-  .dup-panel .dup-title { font-weight: 700; color: #92400e; margin-bottom: 0.4rem; }
-  .dup-match {
-    padding: 0.4rem 0; border-bottom: 1px solid #fde68a; color: var(--text);
-  }
-  .dup-match:last-child { border-bottom: none; }
-
-  .ann-row {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    padding: 0.75rem 0; border-bottom: 1px solid var(--border); gap: 1rem;
-  }
-  .ann-row:last-child { border-bottom: none; }
-  .ann-row-body { flex: 1; }
-  .ann-row-title { font-weight: 700; color: var(--primary); margin-bottom: 0.2rem; }
-  .ann-row-content { font-size: 0.87rem; color: var(--text); margin-bottom: 0.3rem; }
-  .ann-row-meta { font-size: 0.78rem; color: var(--muted); }
-  .ann-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
-</style>
 </head>
 <body>
-<nav class="navbar">
-  <div class="navbar-brand">TechniConnect</div>
-  <div class="navbar-links">
-    <span style="color:#fff;" class="small">Staff Account</span>
-    <a href="/logout" class="button ghost btn-small">Log Out</a>
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="navbar">
+  <div class="navbar-brand">
+    <img src="/img/cit-logo.png" alt="" width="44" height="44" onerror="this.remove()">
+    <span class="brand-text">TechniConnect<small>Alumni Affairs</small></span>
   </div>
-</nav>
-<div class="container">
+  <div class="navbar-links">
+    <span class="navbar-user">Staff account</span>
+    <a href="/logout" class="button ghost btn-small">Log out</a>
+  </div>
+</header>
+
+<main id="main" class="container">
   <h1 class="page-title">Alumni Affairs Dashboard</h1>
 
+  <div class="stats" aria-label="Summary">
+    <div class="stat"><span class="stat-value" id="statPending">&ndash;</span><span class="stat-label">Pending registration requests</span></div>
+    <div class="stat"><span class="stat-value" id="statAnn">&ndash;</span><span class="stat-label">Published announcements</span></div>
+    <div class="stat"><span class="stat-value" id="statJobs">&ndash;</span><span class="stat-label">Published job offers</span></div>
+  </div>
+
+  <nav class="subnav" aria-label="Dashboard sections">
+    <a href="#sec-queue">Verification queue</a>
+    <a href="#sec-announcements">Announcements</a>
+    <a href="#sec-jobs">Job offers</a>
+    <a href="#sec-records">Alumni records</a>
+  </nav>
+
   <!-- Verification Queue -->
-  <section class="card">
-    <h2 class="section-title">Verification Queue</h2>
-    <div id="queueControls" style="margin-bottom:0.75rem;display:flex;gap:0.75rem;align-items:center;">
-      <input type="text" id="qSearch" placeholder="Search by name, email, or student ID"
-        style="padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);width:320px;">
+  <section class="card" id="sec-queue" aria-labelledby="queueTitle">
+    <h2 class="section-title" id="queueTitle">Verification queue</h2>
+    <div class="filter-row">
+      <input type="search" id="qSearch" class="search-input" aria-label="Filter the queue" placeholder="Filter by name, email or status" oninput="filterQueue()">
       <button class="button primary btn-small" onclick="loadQueue()">Refresh</button>
     </div>
-    <div id="queue" class="empty">Loading...</div>
+    <div id="queue" class="empty" aria-live="polite">Loading...</div>
   </section>
 
-  <!-- Announcements Management -->
-  <section class="card">
-    <h2 class="section-title">Announcements</h2>
-
-    <!-- Post new announcement -->
-    <form id="announcementForm" style="margin-bottom:1.25rem;">
+  <!-- Announcements -->
+  <section class="card" id="sec-announcements" aria-labelledby="annTitle">
+    <h2 class="section-title" id="annTitle">Announcements</h2>
+    <form id="announcementForm" class="mb-4">
       <div class="form-group">
         <label for="ann-title">Title <span class="require">*</span></label>
         <input type="text" id="ann-title" placeholder="Announcement title" required>
       </div>
       <div class="form-group">
         <label for="ann-content">Content <span class="require">*</span></label>
-        <textarea id="ann-content" rows="3" placeholder="Write announcement content..." required></textarea>
+        <textarea id="ann-content" rows="3" placeholder="Write the announcement" required></textarea>
       </div>
-      <button type="submit" class="button primary btn-small" id="annBtn">Post Announcement</button>
+      <button type="submit" class="button primary btn-small" id="annBtn">Post announcement</button>
     </form>
-
     <div id="announcementList"><div class="empty">Loading announcements...</div></div>
   </section>
 
+  <!-- Job Offers -->
+  <section class="card" id="sec-jobs" aria-labelledby="jobsTitle">
+    <h2 class="section-title" id="jobsTitle">Job offers</h2>
+    <p class="small">
+      Post openings for alumni. Leave the audience on "All alumni", or limit an offer to specific colleges or programs.
+      Alumni see only the offers that match the college or program on their profile.
+    </p>
+
+    <form id="jobForm" class="mb-4">
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-company">Company name <span class="require">*</span></label>
+          <input type="text" id="job-company" required>
+        </div>
+        <div class="form-group">
+          <label for="job-title">Job title <span class="require">*</span></label>
+          <input type="text" id="job-title" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="job-desc">Job description</label>
+        <textarea id="job-desc" rows="3" placeholder="What the role involves, work setup, benefits and other important details"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-req">Requirements <span class="require">*</span></label>
+          <textarea id="job-req" rows="3" placeholder="e.g. Resume, TOR, NBI clearance" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="job-qual">Qualifications <span class="require">*</span></label>
+          <textarea id="job-qual" rows="3" placeholder="e.g. BS Computer Engineering, 1 year experience" required></textarea>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-contact">Contact numbers for inquiries <span class="require">*</span></label>
+          <input type="text" id="job-contact" placeholder="e.g. 0917 000 0000, (032) 000 0000" required>
+        </div>
+        <div class="form-group">
+          <label for="job-email">Contact email</label>
+          <input type="email" id="job-email" placeholder="hr@company.com">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-location">Location</label>
+          <input type="text" id="job-location" placeholder="e.g. Cebu City, Remote">
+        </div>
+        <div class="form-group">
+          <label for="job-type">Employment type</label>
+          <select id="job-type">
+            <option value="">Not specified</option>
+            <option>Full-time</option>
+            <option>Part-time</option>
+            <option>Contract</option>
+            <option>Internship</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="job-salary">Salary range</label>
+          <input type="text" id="job-salary" placeholder="e.g. PHP 25,000 to 35,000 per month">
+        </div>
+        <div class="form-group">
+          <label for="job-deadline">Application deadline</label>
+          <input type="date" id="job-deadline">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="job-audience">Who can see this offer?</label>
+        <select id="job-audience" onchange="toggleAudience()">
+          <option value="all">All alumni</option>
+          <option value="restricted">Specific colleges or programs only</option>
+        </select>
+      </div>
+      <div class="audience-box" id="audienceBox">
+        <div class="form-group">
+          <label for="job-colleges">Colleges / departments (comma separated)</label>
+          <input type="text" id="job-colleges" placeholder="e.g. College of Engineering and Architecture">
+        </div>
+        <div class="form-group mb-0">
+          <label for="job-programs">Programs (comma separated)</label>
+          <input type="text" id="job-programs" placeholder="e.g. BS Computer Engineering, BS Information Technology">
+        </div>
+        <p class="hint mt-2">Names must match what alumni enter on their profile (capitalization is ignored). An alumnus who matches any listed college or program can see the offer.</p>
+      </div>
+
+      <button type="submit" class="button primary btn-small" id="jobBtn">Post job offer</button>
+    </form>
+
+    <div id="jobList"><div class="empty">Loading job offers...</div></div>
+  </section>
+
   <!-- Alumni Records -->
-  <section class="card">
-    <h2 class="section-title">Alumni Records (staff only)</h2>
-    <div style="margin-bottom:0.75rem;display:flex;gap:0.75rem;align-items:center;">
-      <input type="text" id="rSearch" placeholder="Search alumni records..."
-        style="padding:0.55rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);width:320px;">
+  <section class="card" id="sec-records" aria-labelledby="recTitle">
+    <h2 class="section-title" id="recTitle">Alumni records (staff only)</h2>
+    <div class="filter-row">
+      <input type="search" id="rSearch" class="search-input" aria-label="Search alumni records" placeholder="Search name, email, student ID, college, program"
+        onkeydown="if(event.key==='Enter')loadRecords()">
+      <input type="text" id="rCollege" aria-label="Filter by college" placeholder="Filter by college" style="width:180px;">
+      <input type="number" id="rBatch" aria-label="Filter by batch year" placeholder="Batch year" inputmode="numeric" style="width:130px;">
+      <select id="rVerified" aria-label="Filter by verification status">
+        <option value="">All statuses</option>
+        <option value="true">Verified</option>
+        <option value="false">Not verified</option>
+      </select>
       <button class="button secondary btn-small" onclick="loadRecords()">Search</button>
+      <button class="button ghost btn-small" onclick="resetRecordFilters()">Reset</button>
     </div>
+    <div class="filter-row">
+      <label class="small mb-0" for="rSort">Sort by</label>
+      <select id="rSort" onchange="sortFromDropdown()">
+        <option value="created_at">Date added</option>
+        <option value="last_name">Last name</option>
+        <option value="first_name">First name</option>
+        <option value="batch_year">Batch year</option>
+        <option value="college">College</option>
+        <option value="program">Program</option>
+        <option value="email">Email</option>
+        <option value="is_verified">Verified</option>
+        <option value="show_in_directory">In directory</option>
+      </select>
+      <select id="rOrder" aria-label="Sort order" onchange="sortFromDropdown()">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+      <span class="small">You can also click a column heading to sort.</span>
+    </div>
+    <div class="rec-count hidden" id="recCount" aria-live="polite"></div>
     <div id="records" class="empty">Loading...</div>
   </section>
-</div>
+</main>
 
 <!-- Record edit modal -->
-<div id="modal" class="hidden"
-  style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:50;display:flex;align-items:center;justify-content:center;">
-  <div class="card" style="max-width:560px;width:92%;background:var(--surface);position:relative;">
-    <button onclick="closeModal()"
-      style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;color:var(--muted);">&times;</button>
-    <h2 class="section-title" style="margin-top:0;">Edit Alumni Record</h2>
+<div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="editTitle" onclick="if(event.target===this)closeModal()">
+  <div class="card" style="max-width:560px;">
+    <button type="button" class="modal-close" aria-label="Close edit form" onclick="closeModal()">&times;</button>
+    <h2 class="section-title" id="editTitle" style="margin-top:0;">Edit alumni record</h2>
     <form id="editForm">
       <input type="hidden" name="id">
       <div class="grid-2">
-        <div class="form-group"><label>First name</label><input name="first_name" required></div>
-        <div class="form-group"><label>Middle name</label><input name="middle_name"></div>
+        <div class="form-group"><label for="ed-first">First name <span class="require">*</span></label><input id="ed-first" name="first_name" required></div>
+        <div class="form-group"><label for="ed-middle">Middle name</label><input id="ed-middle" name="middle_name"></div>
       </div>
-      <div class="form-group"><label>Last name</label><input name="last_name" required></div>
+      <div class="form-group"><label for="ed-last">Last name <span class="require">*</span></label><input id="ed-last" name="last_name" required></div>
       <div class="grid-2">
-        <div class="form-group"><label>Batch year</label><input name="batch_year" type="number"></div>
-        <div class="form-group"><label>College</label><input name="college"></div>
+        <div class="form-group"><label for="ed-batch">Batch year</label><input id="ed-batch" name="batch_year" type="number" inputmode="numeric"></div>
+        <div class="form-group"><label for="ed-college">College</label><input id="ed-college" name="college"></div>
       </div>
+      <div class="form-group"><label for="ed-program">Program</label><input id="ed-program" name="program"></div>
       <div class="grid-2">
-        <div class="form-group"><label>Email</label><input name="email"></div>
-        <div class="form-group"><label>Contact number</label><input name="contact_number"></div>
+        <div class="form-group"><label for="ed-email">Email</label><input id="ed-email" name="email" type="email"></div>
+        <div class="form-group"><label for="ed-contact">Contact number</label><input id="ed-contact" name="contact_number" type="tel"></div>
       </div>
-      <div class="form-group"><label>Address</label><textarea name="address" rows="3"></textarea></div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-        <button type="submit" class="button primary">Save</button>
+      <div class="form-group"><label for="ed-address">Address</label><textarea id="ed-address" name="address" rows="3"></textarea></div>
+      <div class="flex-between" style="justify-content:flex-start;">
+        <button type="submit" class="button primary">Save changes</button>
         <button type="button" class="button ghost" onclick="closeModal()">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
+<script src="/js/ui.js"></script>
 <script>
 const modal = document.getElementById('modal');
 const editForm = document.getElementById('editForm');
 let editingId = null;
-
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
-}
+let recordsCache = [];
+let sortCol = 'created_at';
+let sortDir = 'desc';
+let pendingFocusCol = null;
 
 async function loadJson(path) {
   const res = await fetch(path);
@@ -142,15 +248,18 @@ async function loadJson(path) {
 // --- Verification queue ---
 async function loadQueue() {
   const el = document.getElementById('queue');
-  el.innerHTML = '<div class="empty">Loading...</div>';
+  el.className = 'empty';
+  el.innerHTML = 'Loading...';
   try {
     const rows = await loadJson('/staff/verification-queue');
+    document.getElementById('statPending').textContent = rows.filter(r => r.status === 'pending').length;
     if (!rows.length) {
-      el.innerHTML = '<div class="empty">No pending registration requests.</div>';
+      el.innerHTML = 'No registration requests yet.';
       return;
     }
+    el.className = '';
 
-    // Fetch duplicate checks for all pending rows in parallel
+    // Fetch duplicate checks for all rows in parallel
     const dupResults = await Promise.all(
       rows.map(r =>
         fetch(`/staff/duplicate-check/${r.user_id}`)
@@ -161,10 +270,11 @@ async function loadQueue() {
 
     el.innerHTML = `
       <table>
+        <caption class="sr-only">Registration requests</caption>
         <thead>
           <tr>
-            <th>Name</th><th>Email</th><th>Status</th>
-            <th>Submitted</th><th>ID Document</th><th>Action</th>
+            <th scope="col">Name</th><th scope="col">Email</th><th scope="col">Status</th>
+            <th scope="col">Submitted</th><th scope="col">ID document</th><th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -177,16 +287,16 @@ async function loadQueue() {
                 <td>
                   <div>${escapeHtml(r.first_name || '')} ${escapeHtml(r.last_name || '')}</div>
                   ${hasDup ? `
-                    <span class="dup-badge" onclick="toggleDupPanel('${dupId}')">
-                      ⚠ ${dups.length} possible duplicate${dups.length > 1 ? 's' : ''}
-                    </span>
+                    <button type="button" class="dup-badge" aria-expanded="false" aria-controls="${dupId}" onclick="toggleDupPanel('${dupId}')">
+                      &#9888; ${dups.length} possible duplicate${dups.length > 1 ? 's' : ''}
+                    </button>
                     <div id="${dupId}" class="dup-panel" style="display:none;">
                       <div class="dup-title">Matching verified alumni records:</div>
                       ${dups.map(d => `
                         <div class="dup-match">
                           <strong>${escapeHtml(d.first_name || '')} ${escapeHtml(d.last_name || '')}</strong>
                           &mdash; ${escapeHtml(d.email || '—')}
-                          ${d.batch_year ? ' &middot; Batch ' + d.batch_year : ''}
+                          ${d.batch_year ? ' &middot; Batch ' + escapeHtml(d.batch_year) : ''}
                           ${d.college ? ' &middot; ' + escapeHtml(d.college) : ''}
                         </div>
                       `).join('')}
@@ -194,16 +304,18 @@ async function loadQueue() {
                   ` : ''}
                 </td>
                 <td>${escapeHtml(r.users?.email || r.email || '—')}</td>
-                <td><span class="badge ${r.status}">${r.status}</span></td>
+                <td><span class="badge ${escapeHtml(r.status)}">${escapeHtml(r.status)}</span></td>
                 <td class="small">${new Date(r.created_at).toLocaleDateString()}</td>
                 <td>
                   ${r.id_document_path
-                    ? `<a href="${escapeHtml(r.id_document_path)}" class="small" target="_blank" rel="noopener">View ID</a>`
+                    ? `<a href="${escapeHtml(r.id_document_path)}" class="small" target="_blank" rel="noopener">View ID<span class="sr-only"> (opens in a new tab)</span></a>`
                     : '<span class="small">—</span>'}
                 </td>
                 <td>
-                  <button class="button success btn-small" onclick="handleRequest(${r.id},'approve')">Approve</button>
-                  <button class="button danger btn-small" onclick="handleRequest(${r.id},'reject')">Reject</button>
+                  ${r.status === 'pending' ? `
+                    <button class="button success btn-small" onclick="handleRequest(${r.id},'approve')">Approve</button>
+                    <button class="button danger btn-small" onclick="handleRequest(${r.id},'reject')">Reject</button>
+                  ` : '<span class="small">Reviewed</span>'}
                 </td>
               </tr>
             `;
@@ -211,15 +323,28 @@ async function loadQueue() {
         </tbody>
       </table>
     `;
+    filterQueue();
   } catch (e) {
-    el.innerHTML = '<div class="empty">Unable to load queue.</div>';
+    el.className = 'empty';
+    el.innerHTML = 'Could not load the queue. Select Refresh to try again.';
   }
+}
+
+// Filters the rows already on screen (no extra request)
+function filterQueue() {
+  const needle = document.getElementById('qSearch').value.trim().toLowerCase();
+  document.querySelectorAll('#queue tbody tr').forEach(tr => {
+    tr.hidden = !!needle && !tr.textContent.toLowerCase().includes(needle);
+  });
 }
 
 function toggleDupPanel(id) {
   const panel = document.getElementById(id);
   if (!panel) return;
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  const show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  const btn = document.querySelector('[aria-controls="' + id + '"]');
+  if (btn) btn.setAttribute('aria-expanded', show ? 'true' : 'false');
 }
 
 async function handleRequest(id, action) {
@@ -231,24 +356,79 @@ async function handleRequest(id, action) {
       body: JSON.stringify({ action, admin_notes: notes })
     });
     if (!res.ok) throw new Error(await res.text());
+    notify(action === 'approve' ? 'Request approved.' : 'Request rejected.');
     loadQueue();
-  } catch (e) { alert(e.message || 'Action failed.'); }
+  } catch (e) { notify(e.message || 'Action failed. Try again.', 'error'); }
 }
 
-// --- Alumni records ---
+// --- Alumni records: search, filter, sort ---
+function arrow(col) {
+  return sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+}
+
+function setSort(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  document.getElementById('rSort').value = sortCol;
+  document.getElementById('rOrder').value = sortDir;
+  pendingFocusCol = col;
+  loadRecords();
+}
+
+function sortFromDropdown() {
+  sortCol = document.getElementById('rSort').value;
+  sortDir = document.getElementById('rOrder').value;
+  loadRecords();
+}
+
+function resetRecordFilters() {
+  ['rSearch', 'rCollege', 'rBatch', 'rVerified'].forEach(id => document.getElementById(id).value = '');
+  sortCol = 'created_at'; sortDir = 'desc';
+  document.getElementById('rSort').value = sortCol;
+  document.getElementById('rOrder').value = sortDir;
+  loadRecords();
+}
+
 async function loadRecords() {
-  const q = document.getElementById('rSearch').value;
+  const params = new URLSearchParams();
+  const q = document.getElementById('rSearch').value.trim();
+  const college = document.getElementById('rCollege').value.trim();
+  const batch = document.getElementById('rBatch').value.trim();
+  const verified = document.getElementById('rVerified').value;
+  if (q) params.set('q', q);
+  if (college) params.set('college', college);
+  if (batch) params.set('batch_year', batch);
+  if (verified) params.set('verified', verified);
+  params.set('sort', sortCol);
+  params.set('order', sortDir);
+
+  const el = document.getElementById('records');
+  const countEl = document.getElementById('recCount');
   try {
-    const rows = await loadJson('/staff/alumni-records?q=' + encodeURIComponent(q));
-    const el = document.getElementById('records');
+    const rows = await loadJson('/staff/alumni-records?' + params.toString());
+    recordsCache = rows;
+    countEl.textContent = rows.length + ' record' + (rows.length === 1 ? '' : 's') + ' found';
+    countEl.classList.remove('hidden');
     if (!rows.length) {
-      el.innerHTML = '<div class="empty">No alumni records found.</div>';
+      el.className = 'empty';
+      el.innerHTML = 'No alumni records match. Try clearing the filters.';
       return;
     }
+    el.className = '';
+    const th = (col, label) =>
+      `<th scope="col" class="sortable" data-col="${col}" tabindex="0"
+           aria-sort="${sortCol === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}"
+           onclick="setSort('${col}')"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setSort('${col}')}">${label}${arrow(col)}</th>`;
     el.innerHTML = `
       <table>
+        <caption class="sr-only">Alumni records</caption>
         <thead>
-          <tr><th>Name</th><th>Student ID</th><th>Email</th><th>Batch</th><th>College</th><th>Verified</th><th>In Directory</th><th>Action</th></tr>
+          <tr>
+            ${th('last_name', 'Name')}<th scope="col">Student ID</th>${th('email', 'Email')}
+            ${th('batch_year', 'Batch')}${th('college', 'College')}${th('program', 'Program')}
+            ${th('is_verified', 'Verified')}${th('show_in_directory', 'In directory')}<th scope="col">Action</th>
+          </tr>
         </thead>
         <tbody>
           ${rows.map(r => `
@@ -256,46 +436,51 @@ async function loadRecords() {
               <td>${escapeHtml(r.first_name || '')} ${escapeHtml(r.last_name || '')}</td>
               <td>${escapeHtml(r.student_id || '—')}</td>
               <td>${escapeHtml(r.email || '—')}</td>
-              <td>${r.batch_year || '—'}</td>
+              <td>${escapeHtml(r.batch_year || '—')}</td>
               <td>${escapeHtml(r.college || '—')}</td>
+              <td>${escapeHtml(r.program || '—')}</td>
               <td>${r.is_verified ? '<span class="badge approved">Yes</span>' : '<span class="badge pending">No</span>'}</td>
-              <td>${r.show_in_directory ? '✓' : '—'}</td>
+              <td>${r.show_in_directory ? '<span aria-label="Yes">&#10003;</span>' : '<span aria-label="No">—</span>'}</td>
               <td>
-                <button class="button ghost btn-small" onclick="openEdit(
-                  ${r.id},
-                  '${escapeHtml(r.first_name||'')}','${escapeHtml(r.middle_name||'')}',
-                  '${escapeHtml(r.last_name||'')}',${r.batch_year||'null'},
-                  '${escapeHtml(r.college||'')}','${escapeHtml(r.email||'')}',
-                  '${escapeHtml(r.contact_number||'')}','${escapeHtml(r.address||'')}'
-                )">Edit</button>
+                <button class="button ghost btn-small" onclick="openEdit(${r.id})">Edit<span class="sr-only"> ${escapeHtml(r.first_name || '')} ${escapeHtml(r.last_name || '')}</span></button>
               </td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     `;
+    if (pendingFocusCol) {
+      const t = el.querySelector('th[data-col="' + pendingFocusCol + '"]');
+      if (t) t.focus();
+      pendingFocusCol = null;
+    }
   } catch (e) {
-    document.getElementById('records').innerHTML = '<div class="empty">Unable to load records.</div>';
+    countEl.classList.add('hidden');
+    el.className = 'empty';
+    el.innerHTML = 'Could not load records. Refresh the page to try again.';
   }
 }
 
 // --- Edit modal ---
-function openEdit(id, fn, mn, ln, by, col, em, cn, addr) {
+function openEdit(id) {
+  const r = recordsCache.find(x => x.id === id);
+  if (!r) return;
   editingId = id;
   const f = editForm;
   f.elements['id'].value = id;
-  f.elements['first_name'].value = fn;
-  f.elements['middle_name'].value = mn;
-  f.elements['last_name'].value = ln;
-  f.elements['batch_year'].value = by || '';
-  f.elements['college'].value = col;
-  f.elements['email'].value = em;
-  f.elements['contact_number'].value = cn;
-  f.elements['address'].value = addr;
-  modal.classList.remove('hidden');
+  f.elements['first_name'].value = r.first_name || '';
+  f.elements['middle_name'].value = r.middle_name || '';
+  f.elements['last_name'].value = r.last_name || '';
+  f.elements['batch_year'].value = r.batch_year || '';
+  f.elements['college'].value = r.college || '';
+  f.elements['program'].value = r.program || '';
+  f.elements['email'].value = r.email || '';
+  f.elements['contact_number'].value = r.contact_number || '';
+  f.elements['address'].value = r.address || '';
+  openModal(modal, f.elements['first_name']);
 }
 
-function closeModal() { modal.classList.add('hidden'); }
+function closeModal() { closeModalEl(modal); }
 
 editForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -309,12 +494,13 @@ editForm.addEventListener('submit', async (e) => {
     });
     if (!res.ok) throw new Error(await res.text());
     closeModal();
+    notify('Record saved.');
     loadRecords();
   } catch (err) {
-    alert(err.message || 'Update failed.');
+    notify(err.message || 'Could not save the record. Try again.', 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Save';
+    btn.textContent = 'Save changes';
   }
 });
 
@@ -323,8 +509,9 @@ async function loadAnnouncements() {
   const el = document.getElementById('announcementList');
   try {
     const rows = await loadJson('/staff/announcements');
+    document.getElementById('statAnn').textContent = rows.filter(a => a.published).length;
     if (!rows.length) {
-      el.innerHTML = '<div class="empty">No announcements yet.</div>';
+      el.innerHTML = '<div class="empty">No announcements yet. Post the first one above.</div>';
       return;
     }
     el.innerHTML = rows.map(a => `
@@ -346,7 +533,7 @@ async function loadAnnouncements() {
       </div>
     `).join('');
   } catch {
-    el.innerHTML = '<div class="empty">Unable to load announcements.</div>';
+    el.innerHTML = '<div class="empty">Could not load announcements. Refresh the page to try again.</div>';
   }
 }
 
@@ -366,12 +553,13 @@ document.getElementById('announcementForm').addEventListener('submit', async (e)
     if (!res.ok) throw new Error(await res.text());
     document.getElementById('ann-title').value = '';
     document.getElementById('ann-content').value = '';
+    notify('Announcement posted.');
     loadAnnouncements();
   } catch (err) {
-    alert(err.message || 'Failed to post announcement.');
+    notify(err.message || 'Could not post the announcement. Try again.', 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Post Announcement';
+    btn.textContent = 'Post announcement';
   }
 });
 
@@ -382,8 +570,9 @@ async function togglePublish(id, currentlyPublished) {
       body: JSON.stringify({ published: !currentlyPublished })
     });
     if (!res.ok) throw new Error(await res.text());
+    notify(currentlyPublished ? 'Announcement unpublished.' : 'Announcement published.');
     loadAnnouncements();
-  } catch (err) { alert(err.message || 'Failed to update.'); }
+  } catch (err) { notify(err.message || 'Could not update the announcement.', 'error'); }
 }
 
 async function deleteAnnouncement(id) {
@@ -391,14 +580,142 @@ async function deleteAnnouncement(id) {
   try {
     const res = await fetch(`/staff/announcements/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(await res.text());
+    notify('Announcement deleted.');
     loadAnnouncements();
-  } catch (err) { alert(err.message || 'Failed to delete.'); }
+  } catch (err) { notify(err.message || 'Could not delete the announcement.', 'error'); }
+}
+
+// --- Job offers ---
+function toggleAudience() {
+  document.getElementById('audienceBox').classList.toggle(
+    'visible', document.getElementById('job-audience').value === 'restricted'
+  );
+}
+
+// Past deadlines are not useful, so block them in the date picker
+document.getElementById('job-deadline').min = new Date().toISOString().slice(0, 10);
+
+async function loadJobs() {
+  const el = document.getElementById('jobList');
+  try {
+    const rows = await loadJson('/staff/job-offers');
+    document.getElementById('statJobs').textContent = rows.filter(j => j.published).length;
+    if (!rows.length) {
+      el.innerHTML = '<div class="empty">No job offers yet. Post the first one above.</div>';
+      return;
+    }
+    el.innerHTML = rows.map(j => {
+      const colleges = j.target_colleges || [];
+      const programs = j.target_programs || [];
+      const open = !colleges.length && !programs.length;
+      return `
+      <div class="ann-row">
+        <div class="ann-row-body">
+          <div class="ann-row-title">
+            ${escapeHtml(j.job_title)} at ${escapeHtml(j.company_name)}
+            ${!j.published ? '<span class="badge pending" style="margin-left:0.4rem;">Unpublished</span>' : ''}
+          </div>
+          <div style="margin:0.3rem 0;">
+            ${open ? '<span class="tag open">All alumni</span>' : ''}
+            ${colleges.map(c => `<span class="tag">${escapeHtml(c)}</span>`).join('')}
+            ${programs.map(p => `<span class="tag">${escapeHtml(p)}</span>`).join('')}
+          </div>
+          ${j.description ? `<div class="job-detail"><strong>Description:</strong> ${escapeHtml(j.description)}</div>` : ''}
+          <div class="job-detail"><strong>Requirements:</strong> ${escapeHtml(j.requirements)}</div>
+          <div class="job-detail"><strong>Qualifications:</strong> ${escapeHtml(j.qualifications)}</div>
+          <div class="job-detail"><strong>Contact:</strong> ${escapeHtml(j.contact_numbers)}${j.contact_email ? ' &middot; ' + escapeHtml(j.contact_email) : ''}</div>
+          <div class="ann-row-meta">
+            ${[j.location, j.employment_type, j.salary_range,
+               j.application_deadline ? 'Deadline ' + j.application_deadline : null,
+               'Posted ' + new Date(j.created_at).toLocaleDateString()]
+              .filter(Boolean).map(escapeHtml).join(' &middot; ')}
+          </div>
+        </div>
+        <div class="ann-row-actions">
+          <button class="button ghost btn-small" onclick="toggleJob(${j.id}, ${j.published})">
+            ${j.published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button class="button danger btn-small" onclick="deleteJob(${j.id})">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div class="empty">Could not load job offers. Refresh the page to try again.</div>';
+  }
+}
+
+document.getElementById('jobForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('jobBtn');
+  const v = id => document.getElementById(id).value.trim();
+  const restricted = v('job-audience') === 'restricted';
+  const body = {
+    company_name: v('job-company'),
+    job_title: v('job-title'),
+    description: v('job-desc'),
+    requirements: v('job-req'),
+    qualifications: v('job-qual'),
+    contact_numbers: v('job-contact'),
+    contact_email: v('job-email'),
+    location: v('job-location'),
+    employment_type: v('job-type'),
+    salary_range: v('job-salary'),
+    application_deadline: v('job-deadline'),
+    target_colleges: restricted ? v('job-colleges') : '',
+    target_programs: restricted ? v('job-programs') : ''
+  };
+  if (restricted && !body.target_colleges && !body.target_programs) {
+    notify('Enter at least one college or program, or choose "All alumni".', 'error');
+    document.getElementById('job-colleges').focus();
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  try {
+    const res = await fetch('/staff/job-offers', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    e.target.reset();
+    toggleAudience();
+    notify('Job offer posted.');
+    loadJobs();
+  } catch (err) {
+    notify(err.message || 'Could not post the job offer. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Post job offer';
+  }
+});
+
+async function toggleJob(id, currentlyPublished) {
+  try {
+    const res = await fetch(`/staff/job-offers/${id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: !currentlyPublished })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    notify(currentlyPublished ? 'Job offer unpublished.' : 'Job offer published.');
+    loadJobs();
+  } catch (err) { notify(err.message || 'Could not update the job offer.', 'error'); }
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job offer? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/staff/job-offers/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    notify('Job offer deleted.');
+    loadJobs();
+  } catch (err) { notify(err.message || 'Could not delete the job offer.', 'error'); }
 }
 
 // Initial load
 loadQueue();
 loadRecords();
 loadAnnouncements();
+loadJobs();
 </script>
 </body>
 </html>

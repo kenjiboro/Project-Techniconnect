@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gate Scanner &mdash; TechniConnect</title><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<div class="container" style="max-width:560px;text-align:center;padding-top:3rem;">
+  <h1 class="page-title" style="text-align:center;" id="gateTitle">Tap your alumni ID</h1>
+  <p class="small">Card readers that act like a keyboard type the card number here. Keep this box selected.</p>
+  <input id="uid" autofocus autocomplete="off" placeholder="Card number" style="font-size:1.4rem;text-align:center;">
+  <div id="msg" class="banner pending" style="margin-top:1.5rem;font-size:1.2rem;">Waiting for a card&hellip;</div>
+  <p class="small">Gate: <strong id="gateName"></strong> &middot; use <code>/gate.html?gate=N.%20Bacalso%20Gate</code> for another gate.</p>
+</div>
+<script>
+const gate = new URLSearchParams(location.search).get('gate') || 'Main Gate';
+document.getElementById('gateName').textContent = gate;
+let key = localStorage.getItem('scannerKey');
+if (!key) { key = prompt('Enter the scanner key (GATE_SCANNER_KEY):') || ''; localStorage.setItem('scannerKey', key); }
+const input = document.getElementById('uid'), msg = document.getElementById('msg');
+function show(cls, text) { msg.className = 'banner ' + cls; msg.textContent = text; setTimeout(() => { msg.className = 'banner pending'; msg.textContent = 'Waiting for a card\u2026'; }, 4000); }
+input.addEventListener('keydown', async (e) => {
+  if (e.key !== 'Enter') return;
+  const uid = input.value.trim(); input.value = '';
+  if (!uid) return;
+  try {
+    const res = await fetch('/api/gate/scan', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-scanner-key': key },
+      body: JSON.stringify({ card_uid: uid, gate }) });
+    const d = await res.json();
+    if (res.status === 401) localStorage.removeItem('scannerKey');
+    show(res.ok ? 'verified' : 'rejected', d.message || 'Error');
+  } catch (err) { show('rejected', 'Cannot reach the server.'); }
+});
+document.addEventListener('click', () => input.focus());
+</script></body></html>

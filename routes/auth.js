@@ -26,6 +26,11 @@ router.post('/login', async (req, res) => {
   const user = users[0];
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) return res.status(401).send('Invalid email or password.');
+  const { role } = req.body;
+  if (role && role !== user.role) {
+    const label = role === 'staff' ? 'Alumni Affairs Staff' : 'Alumnus / Alumna';
+    return res.status(403).send(`This account is not registered as ${label}.`);
+  }
 
   req.session.user = { id: user.id, email: user.email, role: user.role };
   if (user.role === 'staff') return res.redirect('/staff/dashboard');
@@ -33,10 +38,12 @@ router.post('/login', async (req, res) => {
 });
 
 // --- Logout ---
-router.post('/logout', (req, res) => {
+function handleLogout(req, res) {
   req.session.destroy(() => {
     res.redirect('/login');
   });
-});
+}
+router.get('/logout', handleLogout);
+router.post('/logout', handleLogout);
 
 module.exports = router;
