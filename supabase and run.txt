@@ -4,12 +4,12 @@ Install (first time only):
 2. Open a new terminal and set the variables.
 
    Windows PowerShell:
-   $env:SUPABASE_URL="https://your-project.supabase.co"
-   $env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+   $env:SUPABASE_URL="https://asxbmjmjcqhjoqywbspy.supabase.co"
+   $env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key" (naa ra supabase api key -  secret)
 
    Mac / Linux / Git Bash:
-   export SUPABASE_URL="https://your-project.supabase.co"
-   export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+   export SUPABASE_URL="https://asxbmjmjcqhjoqywbspy.supabase.co"
+   export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key" (naa ra supabase api key -  secret)
 
 3. Run:
    npm start
