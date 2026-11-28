@@ -33,10 +33,14 @@ router.post('/login', async (req, res) => {
 });
 
 // --- Logout ---
-router.post('/logout', (req, res) => {
+function doLogout(req, res) {
   req.session.destroy(() => {
+    res.clearCookie('connect.sid');
     res.redirect('/login');
   });
-});
+}
+
+router.get('/logout', doLogout);
+router.post('/logout', doLogout);
 
 module.exports = router;

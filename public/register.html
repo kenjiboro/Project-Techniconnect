@@ -3,199 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7a1219">
 <title>Register &mdash; TechniConnect</title>
+<link rel="icon" type="image/png" href="/img/cit-logo.png">
 <link rel="stylesheet" href="/css/style.css">
-<style>
-  .field-error { color: #c0392b; font-size: 0.82rem; margin-top: 3px; display: none; }
-  .field-error.visible { display: block; }
-  .input-error { border-color: #c0392b !important; }
-  .password-wrap { position: relative; }
-  .password-wrap input { padding-right: 2.6rem; width: 100%; box-sizing: border-box; }
-  .toggle-pw {
-    position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; font-size: 1.1rem;
-    color: #666; padding: 0; line-height: 1;
-  }
-  .toggle-pw:focus { outline: 2px solid #3498db; border-radius: 3px; }
-</style>
 </head>
 <body>
-<nav class="navbar">
-  <div class="navbar-brand">TechniConnect</div>
-  <div class="navbar-links"><a href="/">Back to home</a></div>
-</nav>
-<div class="container">
-  <div class="card" style="max-width:700px;margin:2rem auto;">
-    <h1 class="page-title">Alumni Registration</h1>
-    <p class="small">Create your alumni account. A government-issued ID is required for verification. Your request will be reviewed by Alumni Affairs staff.</p>
+<a class="skip-link" href="#main">Skip to main content</a>
+<header class="navbar">
+  <a class="navbar-brand" href="/">
+    <img src="/img/cit-logo.png" alt="" width="44" height="44" onerror="this.remove()">
+    <span class="brand-text">TechniConnect<small>CIT-U Alumni Platform</small></span>
+  </a>
+  <nav class="navbar-links" aria-label="Primary">
+    <a href="/">Back to home</a>
+    <a href="/login" class="button ghost btn-small">Log in</a>
+  </nav>
+</header>
 
-    <div class="flash error hidden" id="error"></div>
+<main id="main" class="container">
+  <div class="card form-card">
+    <h1 class="page-title">Alumni registration</h1>
+    <p class="small">Create your alumni account. A government-issued ID is required for verification, and Alumni Affairs staff will review your request. Fields marked <span class="require">*</span> are required.</p>
+
+    <div class="flash error hidden" id="error" role="alert" tabindex="-1"></div>
 
     <form id="registerForm" novalidate>
-      <!-- Email -->
-      <div class="form-group">
-        <label for="reg-email">Email address <span class="require">*</span></label>
-        <input type="email" id="reg-email" name="email" required placeholder="you@cit.edu" autocomplete="email">
-        <div class="field-error" id="err-email">Please enter a valid email address.</div>
-      </div>
-
-      <!-- Password -->
-      <div class="form-group">
-        <label for="reg-password">Password <span class="require">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="reg-password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
-          <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password visibility">👁</button>
-        </div>
-        <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
-      </div>
-
-      <!-- Confirm Password -->
-      <div class="form-group">
-        <label for="reg-confirm">Confirm password <span class="require">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="reg-confirm" name="confirm_password" required autocomplete="new-password" placeholder="Re-enter your password">
-          <button type="button" class="toggle-pw" id="toggleConfirm" aria-label="Toggle confirm password visibility">👁</button>
-        </div>
-        <div class="field-error" id="err-confirm">Passwords do not match.</div>
-      </div>
-
-      <!-- First / Middle name -->
-      <div class="grid-2">
+      <fieldset>
+        <legend>Account</legend>
         <div class="form-group">
-          <label for="reg-first">First name <span class="require">*</span></label>
-          <input type="text" id="reg-first" name="first_name" required>
-          <div class="field-error" id="err-first">First name is required.</div>
+          <label for="reg-email">Email address <span class="require">*</span></label>
+          <input type="email" id="reg-email" name="email" required placeholder="you@cit.edu" autocomplete="email" inputmode="email" aria-describedby="err-email">
+          <div class="field-error" id="err-email">Enter a valid email address, like you@cit.edu.</div>
         </div>
-        <div class="form-group">
-          <label for="reg-middle">Middle name</label>
-          <input type="text" id="reg-middle" name="middle_name">
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="reg-password">Password <span class="require">*</span></label>
+            <div class="password-wrap">
+              <input type="password" id="reg-password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters" aria-describedby="err-password">
+              <button type="button" class="toggle-pw" id="togglePw" aria-label="Show or hide password" aria-pressed="false">Show</button>
+            </div>
+            <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
+          </div>
+          <div class="form-group">
+            <label for="reg-confirm">Confirm password <span class="require">*</span></label>
+            <div class="password-wrap">
+              <input type="password" id="reg-confirm" name="confirm_password" required autocomplete="new-password" placeholder="Re-enter your password" aria-describedby="err-confirm">
+              <button type="button" class="toggle-pw" id="toggleConfirm" aria-label="Show or hide confirm password" aria-pressed="false">Show</button>
+            </div>
+            <div class="field-error" id="err-confirm">Passwords do not match.</div>
+          </div>
         </div>
-      </div>
+      </fieldset>
 
-      <!-- Last name -->
-      <div class="form-group">
-        <label for="reg-last">Last name <span class="require">*</span></label>
-        <input type="text" id="reg-last" name="last_name" required>
-        <div class="field-error" id="err-last">Last name is required.</div>
-      </div>
-
-      <!-- Batch year / College -->
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="reg-batch">Batch / graduation year</label>
-          <input type="number" id="reg-batch" name="batch_year" min="1950" placeholder="e.g. 2020">
-          <div class="field-error" id="err-batch">Enter a valid graduation year.</div>
+      <fieldset>
+        <legend>Personal details</legend>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="reg-first">First name <span class="require">*</span></label>
+            <input type="text" id="reg-first" name="first_name" required autocomplete="given-name" aria-describedby="err-first">
+            <div class="field-error" id="err-first">First name is required.</div>
+          </div>
+          <div class="form-group">
+            <label for="reg-middle">Middle name</label>
+            <input type="text" id="reg-middle" name="middle_name" autocomplete="additional-name">
+          </div>
         </div>
         <div class="form-group">
-          <label for="reg-college">College / Department</label>
-          <input type="text" id="reg-college" name="college" placeholder="e.g. College of Engineering">
+          <label for="reg-last">Last name <span class="require">*</span></label>
+          <input type="text" id="reg-last" name="last_name" required autocomplete="family-name" aria-describedby="err-last">
+          <div class="field-error" id="err-last">Last name is required.</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Alumni details</legend>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="reg-batch">Batch / graduation year</label>
+            <input type="number" id="reg-batch" name="batch_year" min="1950" placeholder="e.g. 2020" inputmode="numeric" aria-describedby="err-batch">
+            <div class="field-error" id="err-batch">Enter a graduation year from 1950 to this year.</div>
+          </div>
+          <div class="form-group">
+            <label for="reg-college">College / department</label>
+            <input type="text" id="reg-college" name="college" placeholder="e.g. College of Engineering">
+          </div>
         </div>
         <div class="form-group">
           <label for="reg-program">Program</label>
           <input type="text" id="reg-program" name="program" placeholder="e.g. BS Computer Engineering">
         </div>
-      </div>
+      </fieldset>
 
-
-
-      <!-- Contact / Address -->
-      <div class="grid-2">
-        <div class="form-group">
-          <label for="reg-contact">Contact number</label>
-          <input type="tel" id="reg-contact" name="contact_number" placeholder="e.g. +63 9xx xxx xxxx">
+      <fieldset>
+        <legend>Contact</legend>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="reg-contact">Contact number</label>
+            <input type="tel" id="reg-contact" name="contact_number" placeholder="e.g. +63 9xx xxx xxxx" autocomplete="tel" inputmode="tel">
+          </div>
+          <div class="form-group">
+            <label for="reg-address">Address</label>
+            <input type="text" id="reg-address" name="address" placeholder="Street, City, Province" autocomplete="street-address">
+          </div>
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Verification</legend>
         <div class="form-group">
-          <label for="reg-address">Address</label>
-          <input type="text" id="reg-address" name="address" placeholder="Street, City, Province">
+          <label for="reg-id">Government-issued ID document <span class="require">*</span></label>
+          <input type="file" id="reg-id" name="id_document" accept=".pdf,.jpg,.jpeg,.png" required aria-describedby="idHint err-file">
+          <p class="hint" id="idHint">PDF, JPG, JPEG or PNG, up to 5 MB.</p>
+          <p class="small mb-0" id="fileName" aria-live="polite"></p>
+          <div class="field-error" id="err-file">Upload a PDF, JPG, JPEG or PNG file up to 5 MB.</div>
         </div>
-      </div>
+      </fieldset>
 
-      <!-- ID document -->
-      <div class="form-group">
-        <label for="reg-id">Government-issued ID document <span class="require">*</span></label>
-        <input type="file" id="reg-id" name="id_document" accept=".pdf,.jpg,.jpeg,.png" required>
-        <p class="small">Accepted: PDF, JPG, JPEG, PNG (max 5 MB).</p>
-        <div class="field-error" id="err-file">Please upload a valid file (PDF, JPG, JPEG, or PNG, max 5 MB).</div>
-      </div>
-
-      <p class="small">By registering, you agree that your personal information is kept private and accessible only to authorized Alumni Affairs staff.</p>
-      <button type="submit" class="button primary" style="width:100%;" id="regBtn">Submit Registration</button>
+      <p class="small">By registering, you agree that Alumni Affairs staff can see your details to verify your account. Other alumni see your information only if you turn on directory visibility, and only the fields you choose to share.</p>
+      <button type="submit" class="button primary w-full" id="regBtn">Submit registration</button>
+      <p class="small text-center mt-4 mb-0">Already registered? <a href="/login">Log in</a>.</p>
     </form>
   </div>
-</div>
+</main>
 
+<footer class="site-footer">
+  <p>Cebu Institute of Technology &ndash; University &middot; Alumni Affairs Office</p>
+</footer>
+
+<script src="/js/ui.js"></script>
 <script>
-  // --- Helpers ---
   const $ = id => document.getElementById(id);
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const MAX_BYTES = 5 * 1024 * 1024;
 
-  function showError(fieldId, errorId) {
-    $('reg-' + fieldId).classList.add('input-error');
-    $('err-' + fieldId).classList.add('visible');
+  // Field key -> input element (the file input is "reg-id", not "reg-file")
+  const inputOf = f => $(f === 'file' ? 'reg-id' : 'reg-' + f);
+
+  function showError(f) {
+    const input = inputOf(f);
+    input.classList.add('input-error');
+    input.setAttribute('aria-invalid', 'true');
+    $('err-' + f).classList.add('visible');
   }
-  function clearError(fieldId, errorId) {
-    $('reg-' + fieldId).classList.remove('input-error');
-    $('err-' + fieldId).classList.remove('visible');
+  function clearError(f) {
+    const input = inputOf(f);
+    input.classList.remove('input-error');
+    input.removeAttribute('aria-invalid');
+    $('err-' + f).classList.remove('visible');
   }
 
-  // Set batch year max to current year dynamically
+  // Batch year max is the current year
   $('reg-batch').setAttribute('max', new Date().getFullYear());
 
-  // --- Password visibility toggles ---
-  function makeToggle(toggleId, inputId) {
-    $(toggleId).addEventListener('click', () => {
-      const input = $(inputId);
-      const isHidden = input.type === 'password';
-      input.type = isHidden ? 'text' : 'password';
-      $(toggleId).textContent = isHidden ? '🙈' : '👁';
-    });
+  bindPasswordToggle('togglePw', 'reg-password');
+  bindPasswordToggle('toggleConfirm', 'reg-confirm');
+
+  // Same rules as before, one place
+  const rules = {
+    email: () => emailRe.test($('reg-email').value.trim()),
+    password: () => $('reg-password').value.length >= 8,
+    confirm: () => $('reg-confirm').value === $('reg-password').value,
+    first: () => !!$('reg-first').value.trim(),
+    last: () => !!$('reg-last').value.trim(),
+    batch: () => {
+      const raw = $('reg-batch').value;
+      if (!raw) return true;
+      const n = parseInt(raw);
+      return n >= 1950 && n <= new Date().getFullYear();
+    }
+  };
+
+  function check(f) {
+    const ok = rules[f]();
+    if (ok) clearError(f); else showError(f);
+    return ok;
   }
-  makeToggle('togglePw', 'reg-password');
-  makeToggle('toggleConfirm', 'reg-confirm');
 
-  // --- Inline validation on blur ---
-  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  $('reg-email').addEventListener('blur', () => {
-    if (!emailRe.test($('reg-email').value.trim())) showError('email');
-    else clearError('email');
+  // Validate on blur, and re-validate while typing once a field is marked wrong
+  Object.keys(rules).forEach(f => {
+    const el = inputOf(f);
+    el.addEventListener('blur', () => check(f));
+    el.addEventListener('input', () => { if (el.classList.contains('input-error')) check(f); });
   });
+  $('reg-password').addEventListener('input', () => { if ($('reg-confirm').value) check('confirm'); });
 
-  $('reg-password').addEventListener('blur', () => {
-    if ($('reg-password').value.length < 8) showError('password');
-    else clearError('password');
-  });
-
-  $('reg-confirm').addEventListener('blur', () => {
-    if ($('reg-confirm').value !== $('reg-password').value) showError('confirm');
-    else clearError('confirm');
-  });
-
-  $('reg-first').addEventListener('blur', () => {
-    if (!$('reg-first').value.trim()) showError('first');
-    else clearError('first');
-  });
-
-  $('reg-last').addEventListener('blur', () => {
-    if (!$('reg-last').value.trim()) showError('last');
-    else clearError('last');
-  });
-
-  $('reg-batch').addEventListener('blur', () => {
-    const val = parseInt($('reg-batch').value);
-    const max = new Date().getFullYear();
-    if ($('reg-batch').value && (val < 1950 || val > max)) showError('batch');
-    else clearError('batch');
-  });
+  // File check: returns an error message, or '' when valid
+  function fileProblem(file) {
+    if (!file) return 'Upload your government-issued ID.';
+    if (file.size > MAX_BYTES || !ALLOWED_TYPES.includes(file.type)) return 'File must be PDF, JPG, JPEG or PNG and under 5 MB.';
+    return '';
+  }
 
   $('reg-id').addEventListener('change', () => {
     const file = $('reg-id').files[0];
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (file && (file.size > 5 * 1024 * 1024 || !allowedTypes.includes(file.type))) {
-      showError('file', 'err-file');
+    if (file && fileProblem(file)) {
+      $('err-file').textContent = fileProblem(file);
+      showError('file');
       $('reg-id').value = '';
+      $('fileName').textContent = '';
     } else {
-      $('reg-id').classList.remove('input-error');
-      $('err-file').classList.remove('visible');
+      clearError('file');
+      $('fileName').textContent = file ? 'Selected: ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)' : '';
     }
   });
 
@@ -207,56 +217,30 @@
     errorBox.classList.add('hidden');
     errorBox.textContent = '';
 
-    // Run all validations
     let valid = true;
+    Object.keys(rules).forEach(f => { if (!check(f)) valid = false; });
 
-    if (!emailRe.test($('reg-email').value.trim())) { showError('email'); valid = false; }
-    else clearError('email');
-
-    if ($('reg-password').value.length < 8) { showError('password'); valid = false; }
-    else clearError('password');
-
-    if ($('reg-confirm').value !== $('reg-password').value) { showError('confirm'); valid = false; }
-    else clearError('confirm');
-
-    if (!$('reg-first').value.trim()) { showError('first'); valid = false; }
-    else clearError('first');
-
-    if (!$('reg-last').value.trim()) { showError('last'); valid = false; }
-    else clearError('last');
-
-    const batchVal = parseInt($('reg-batch').value);
-    const maxYear = new Date().getFullYear();
-    if ($('reg-batch').value && (batchVal < 1950 || batchVal > maxYear)) { showError('batch'); valid = false; }
-    else clearError('batch');
-
-    const file = $('reg-id').files[0];
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!file) {
-      $('err-file').textContent = 'Please upload your government-issued ID.';
-      $('reg-id').classList.add('input-error');
-      $('err-file').classList.add('visible');
-      valid = false;
-    } else if (file.size > 5 * 1024 * 1024 || !allowedTypes.includes(file.type)) {
-      $('err-file').textContent = 'File must be PDF, JPG, JPEG, or PNG and under 5 MB.';
-      $('reg-id').classList.add('input-error');
-      $('err-file').classList.add('visible');
+    const problem = fileProblem($('reg-id').files[0]);
+    if (problem) {
+      $('err-file').textContent = problem;
+      showError('file');
       valid = false;
     } else {
-      $('reg-id').classList.remove('input-error');
-      $('err-file').classList.remove('visible');
+      clearError('file');
     }
 
     if (!valid) {
-      errorBox.textContent = 'Please fix the errors above before submitting.';
+      errorBox.textContent = 'Some fields need your attention. Fix the highlighted fields and submit again.';
       errorBox.classList.remove('hidden');
+      const firstBad = document.querySelector('.input-error');
+      if (firstBad) firstBad.focus();
       return;
     }
 
     btn.disabled = true;
     btn.textContent = 'Submitting...';
 
-    // Remove confirm_password before sending — server doesn't need it
+    // Remove confirm_password before sending: the server does not need it
     const fd = new FormData(e.target);
     fd.delete('confirm_password');
 
@@ -265,10 +249,11 @@
       if (!res.ok) throw new Error(await res.text());
       window.location.href = '/register-success';
     } catch (err) {
-      errorBox.textContent = err.message || 'Registration failed. Please try again.';
+      errorBox.textContent = err.message || 'Registration failed. Check your details and try again.';
       errorBox.classList.remove('hidden');
+      errorBox.focus();
       btn.disabled = false;
-      btn.textContent = 'Submit Registration';
+      btn.textContent = 'Submit registration';
     }
   });
 </script>
